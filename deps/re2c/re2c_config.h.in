@@ -1,0 +1,6 @@
+#ifndef RE2C_CONFIG_H
+#define RE2C_CONFIG_H
+
+#define RE2C_VERSION "1.1.1-132-g4dea13a1-derived"
+
+#endif
