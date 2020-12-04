@@ -9,15 +9,25 @@ re2c:yyfill:check = 1;
 
 #include "aoc.hpp"
 
-#import <fstream>
-#import <iostream>
+#include <fstream>
+#include <iostream>
 #include <sstream>
-#import <string>
+#include <string>
 #include <string_view>
 #include <unordered_set>
-#import <vector>
+#include <vector>
 
-enum token_type { BYR, EYR, ECL, HGT, HCL, PID, CID, NONE };
+enum token_type {
+  BYR = 0,
+  IYR = 1,
+  EYR = 2,
+  ECL = 3,
+  HGT = 4,
+  HCL = 5,
+  PID = 6,
+  CID = 7,
+  NONE = -1
+};
 
 token_type next_token(const char *YYCURSOR, const char *&val_start, const char *&val_stop)
 {
@@ -29,29 +39,43 @@ token_type next_token(const char *YYCURSOR, const char *&val_start, const char *
   /*!re2c
     "byr:" {
 res = BYR;
+goto done;
+    }
+    "iyr:" {
+res = IYR;
+goto done;
     }
     "eyr:" {
 res = EYR;
+goto done;
     }
     "ecl:" {
 res = ECL;
+goto done;
     }
     "hgt:" {
 res = HGT;
+goto done;
     }
     "hcl:" {
 res = HCL;
+goto done;
     }
     "pid:" {
 res = PID;
+goto done;
     }
     "cid:" {
 res = CID;
+goto done;
     }
     * {
 res = NONE;
+goto done;
     }
    */
+done:
+#if 1
   val_start = val_stop = YYCURSOR;
 
   if (res != NONE)
@@ -62,93 +86,29 @@ res = NONE;
     }
     val_stop = YYCURSOR;
   }
+#endif
 
   return res;
 }
 
 bool valid_passport(const std::string &data)
 {
-  std::istringstream in(data);
-  std::string seq;
   int valid_count = 0;
+  const char *pos = data.data();
+  const char *val_start = pos;
   while (true)
   {
-    in >> seq;
-    if (in.eof())
+    token_type type = next_token(pos, val_start, pos);
+    std::string_view value(val_start, pos - val_start);
+    ++pos;
+    if (type == NONE)
+    {
+      return false;
+    }
+    valid_count += (type != CID);
+    if (pos >= data.data() + data.size())
     {
       break;
-    }
-    if (seq.empty())
-    {
-      continue;
-    }
-    if (seq.size() < 4 || seq[3] != ':')
-    {
-      // can't possibly be valid
-      return false;
-    }
-    switch (seq[0])
-    {
-    case 'b':
-      if (seq[1] == 'y' && seq[2] == 'r')
-      {
-        // "byr"
-        ++valid_count;
-        break;
-      }
-      return false;
-    case 'i':
-      if (seq[1] == 'y' && seq[2] == 'r')
-      {
-        // "iyr"
-        ++valid_count;
-        break;
-      }
-    case 'e':
-      if (seq[1] == 'y' && seq[2] == 'r')
-      {
-        // "eyr"
-        ++valid_count;
-        break;
-      }
-      else if (seq[1] == 'c' && seq[2] == 'l')
-      {
-        // "ecl"
-        ++valid_count;
-        break;
-      }
-      return false;
-    case 'h':
-      if (seq[1] == 'g' && seq[2] == 't')
-      {
-        // "hgt"
-        ++valid_count;
-        break;
-      }
-      else if (seq[1] == 'c' && seq[2] == 'l')
-      {
-        // "hcl"
-        ++valid_count;
-        break;
-      }
-      break;
-    case 'p':
-      if (seq[1] == 'i' && seq[2] == 'd')
-      {
-        // "pid"
-        ++valid_count;
-        break;
-      }
-      return false;
-    case 'c':
-      if (seq[1] == 'i' && seq[2] == 'd')
-      {
-        // "cid", ignore this
-        break;
-      }
-      return false;
-    default:
-      return false;
     }
   }
   return valid_count >= 7;
