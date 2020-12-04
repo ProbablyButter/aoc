@@ -11,234 +11,117 @@ re2c:yyfill:check = 1;
 
 #include <fstream>
 #include <iostream>
-#include <sstream>
 #include <string>
 #include <string_view>
-#include <unordered_set>
 #include <vector>
 
-enum token_type {
-  BYR = 0,
-  IYR = 1,
-  EYR = 2,
-  ECL = 3,
-  HGT = 4,
-  HCL = 5,
-  PID = 6,
-  CID = 7,
-  NONE = -1
-};
-
-token_type next_token(const char *YYCURSOR, const char *&val_start, const char *&val_stop)
+int valid_token(const char *&YYCURSOR)
 {
-  token_type res = NONE;
-
   const char *YYMARKER;
   const char *tok = YYCURSOR;
 
+  int min_year = 0, max_year = 0;
+
   /*!re2c
     "byr:" {
-res = BYR;
-goto done;
+min_year = 1920;
+max_year = 2002;
+goto parse_year;
     }
     "iyr:" {
-res = IYR;
-goto done;
+min_year = 2010;
+max_year = 2020;
+goto parse_year;
     }
     "eyr:" {
-res = EYR;
-goto done;
+min_year = 2020;
+max_year = 2030;
+goto parse_year;
     }
-    "ecl:" {
-res = ECL;
-goto done;
+    "ecl:"("amb"|"blu"|"brn"|"gry"|"grn"|"hzl"|"oth")" " {
+return 1;
     }
     "hgt:" {
-res = HGT;
-goto done;
+goto parse_hgt;
     }
-    "hcl:" {
-res = HCL;
-goto done;
+    "hcl:#"[0-9a-f]{6}" " {
+return 1;
     }
-    "pid:" {
-res = PID;
-goto done;
+    "pid:"[0-9]{9}" " {
+return 1;
     }
-    "cid:" {
-res = CID;
-goto done;
+    "cid:"[^\x20]+" " {
+return 0;
     }
     * {
-res = NONE;
-goto done;
+return -1;
     }
    */
-done:
-#if 1
-  val_start = val_stop = YYCURSOR;
 
-  if (res != NONE)
-  {
-    while (*YYCURSOR && *YYCURSOR != ' ')
-    {
-      ++YYCURSOR;
-    }
-    val_stop = YYCURSOR;
-  }
-#endif
+parse_year:
+  /*!re2c
+[0-9]{4}" " {
+long long year = aoc::svtoll(std::string_view(YYCURSOR - 5, 4));
+if(year >= min_year && year <= max_year)
+{
+return 1;
+}
+return -1;
+}
+* {
+return -1;
+}
+   */
 
-  return res;
+parse_hgt:
+  long long hgt = -1;
+  const char *save_pos = YYCURSOR;
+  /*!re2c
+ [0-9]+ {
+ hgt = aoc::svtoll(std::string_view(save_pos, YYCURSOR - save_pos));
+ goto parse_units;
+ }
+ * {
+ return -1;
+ }
+    */
+
+parse_units:
+  /*!re2c
+"cm " {
+if(hgt >= 150 && hgt <= 193)
+{
+return 1;
+}
+return -1;
+}
+"in " {
+if(hgt >= 59 && hgt <= 76)
+{
+return 1;
+}
+return -1;
+}
+* {
+return -1;
+}
+   */
 }
 
 bool valid_passport(const std::string &data)
 {
-  static std::unordered_set<std::string> valid_ecl = {
-    "amb", "blu", "brn", "gry", "grn", "hzl", "oth"};
   int valid_count = 0;
   const char *pos = data.data();
-  const char *val_start = pos;
   while (true)
   {
-    token_type type = next_token(pos, val_start, pos);
-    std::string_view value(val_start, pos - val_start);
-    switch (type)
+    int val = valid_token(pos);
+    switch (val)
     {
-    case BYR:
-    {
-      if (value.size() != 4)
-      {
-        std::cout << "invalid byr: " << value << std::endl;
-        return false;
-      }
-      auto year = aoc::svtoll(value);
-      if (year < 1920 || year > 2002)
-      {
-        std::cout << "invalid byr: " << value << std::endl;
-        return false;
-      }
-    }
-    break;
-    case IYR:
-    {
-      if (value.size() != 4)
-      {
-        std::cout << "invalid iyr: " << value << std::endl;
-        return false;
-      }
-      auto year = aoc::svtoll(value);
-      if (year < 2010 || year > 2020)
-      {
-        std::cout << "invalid iyr: " << value << std::endl;
-        return false;
-      }
-    }
-    break;
-    case EYR:
-    {
-      if (value.size() != 4)
-      {
-        std::cout << "invalid eyr: " << value << std::endl;
-        return false;
-      }
-      auto year = aoc::svtoll(value);
-      if (year < 2020 || year > 2030)
-      {
-        std::cout << "invalid eyr: " << value << std::endl;
-        return false;
-      }
-    }
-    break;
-    case ECL:
-    {
-      if (valid_ecl.find(std::string(value)) == valid_ecl.end())
-      {
-        std::cout << "invalid ecl: " << value << std::endl;
-        return false;
-      }
-    }
-    break;
-    case HGT:
-    {
-      if (value.size() < 3)
-      {
-        std::cout << "invalid hgt: " << value << std::endl;
-        return false;
-      }
-      auto hgt = value.substr(0, value.size() - 2);
-      for (auto c : hgt)
-      {
-        if (!std::isdigit(c))
-        {
-          std::cout << "invalid hgt: " << value << std::endl;
-          return false;
-        }
-      }
-      long long val = aoc::svtoll(hgt);
-      if (value[value.size() - 2] == 'c' && value[value.size() - 1] == 'm')
-      {
-        if (val < 150 || val > 193)
-        {
-          std::cout << "invalid hgt: " << value << std::endl;
-          return false;
-        }
-      }
-      else if (value[value.size() - 2] == 'i' && value[value.size() - 1] == 'n')
-      {
-        if (val < 59 || val > 76)
-        {
-          std::cout << "invalid hgt: " << value << std::endl;
-          return false;
-        }
-      }
-      else
-      {
-        std::cout << "invalid hgt: " << value << std::endl;
-        return false;
-      }
-    }
-    break;
-    case HCL:
-    {
-      if (value.size() != 7 || value[0] != '#')
-      {
-        std::cout << "invalid hcl: " << value << std::endl;
-        return false;
-      }
-      for (int i = 1; i < 7; ++i)
-      {
-        if (!std::isxdigit(value[i]))
-        {
-          std::cout << "invalid hcl: " << value << std::endl;
-          return false;
-        }
-      }
-    }
-    break;
-    case PID:
-    {
-      if (value.size() != 9)
-      {
-        std::cout << "invalid pid: " << value << std::endl;
-        return false;
-      }
-      for (int i = 9; i < 9; ++i)
-      {
-        if (!std::isdigit(value[i]))
-        {
-          std::cout << "invalid pid: " << value << std::endl;
-          return false;
-        }
-      }
-    }
-    break;
-    case CID:
-      break;
-    case NONE:
+    case -1:
       return false;
+    default:
+      valid_count += val;
     }
-    ++pos;
-    valid_count += (type != CID);
     if (pos >= data.data() + data.size())
     {
       break;

@@ -11,101 +11,59 @@ re2c:yyfill:check = 1;
 
 #include <fstream>
 #include <iostream>
-#include <sstream>
 #include <string>
-#include <string_view>
-#include <unordered_set>
 #include <vector>
 
-enum token_type {
-  BYR = 0,
-  IYR = 1,
-  EYR = 2,
-  ECL = 3,
-  HGT = 4,
-  HCL = 5,
-  PID = 6,
-  CID = 7,
-  NONE = -1
-};
-
-token_type next_token(const char *YYCURSOR, const char *&val_start, const char *&val_stop)
+int valid_token(const char *&YYCURSOR)
 {
-  token_type res = NONE;
-
   const char *YYMARKER;
   const char *tok = YYCURSOR;
 
   /*!re2c
-    "byr:" {
-res = BYR;
-goto done;
+    "byr:"[^\x20]+" " {
+return 1;
     }
-    "iyr:" {
-res = IYR;
-goto done;
+    "iyr:"[^\x20]+" " {
+return 1;
     }
-    "eyr:" {
-res = EYR;
-goto done;
+    "eyr:"[^\x20]+" " {
+return 1;
     }
-    "ecl:" {
-res = ECL;
-goto done;
+    "ecl:"[^\x20]+" " {
+return 1;
     }
-    "hgt:" {
-res = HGT;
-goto done;
+    "hgt:"[^\x20]+" " {
+return 1;
     }
-    "hcl:" {
-res = HCL;
-goto done;
+    "hcl:"[^\x20]+" " {
+return 1;
     }
-    "pid:" {
-res = PID;
-goto done;
+    "pid:"[^\x20]+" " {
+return 1;
     }
-    "cid:" {
-res = CID;
-goto done;
+    "cid:"[^\x20]+" " {
+return 0;
     }
     * {
-res = NONE;
-goto done;
+return -1;
     }
    */
-done:
-#if 1
-  val_start = val_stop = YYCURSOR;
-
-  if (res != NONE)
-  {
-    while (*YYCURSOR && *YYCURSOR != ' ')
-    {
-      ++YYCURSOR;
-    }
-    val_stop = YYCURSOR;
-  }
-#endif
-
-  return res;
 }
 
 bool valid_passport(const std::string &data)
 {
   int valid_count = 0;
   const char *pos = data.data();
-  const char *val_start = pos;
   while (true)
   {
-    token_type type = next_token(pos, val_start, pos);
-    std::string_view value(val_start, pos - val_start);
-    ++pos;
-    if (type == NONE)
+    int val = valid_token(pos);
+    switch (val)
     {
+    case -1:
       return false;
+    default:
+      valid_count += val;
     }
-    valid_count += (type != CID);
     if (pos >= data.data() + data.size())
     {
       break;
