@@ -15,46 +15,60 @@ re2c:yyfill:check = 1;
 #include <string_view>
 #include <vector>
 
+#define  NONE 0
+#define BYR 1
+#define IYR 2
+#define EYR 4
+#define ECL 8
+#define HGT 16
+#define HCL 32
+#define PID 64
+#define CID 128
+
 int valid_token(const char *&YYCURSOR)
 {
   const char *YYMARKER;
   const char *tok = YYCURSOR;
 
   int min_year = 0, max_year = 0;
+  int res = NONE;
 
   /*!re2c
     "byr:" {
 min_year = 1920;
 max_year = 2002;
+res = BYR;
 goto parse_year;
     }
     "iyr:" {
 min_year = 2010;
 max_year = 2020;
+res = IYR;
 goto parse_year;
     }
     "eyr:" {
 min_year = 2020;
 max_year = 2030;
+res = EYR;
 goto parse_year;
     }
     "ecl:"("amb"|"blu"|"brn"|"gry"|"grn"|"hzl"|"oth")" " {
-return 1;
+return ECL;
     }
     "hgt:" {
 goto parse_hgt;
     }
     "hcl:#"[0-9a-f]{6}" " {
-return 1;
+return HCL;
     }
     "pid:"[0-9]{9}" " {
-return 1;
+return PID;
     }
     "cid:"[^\x20]+" " {
-return 0;
+return CID;
     }
     * {
-return -1;
+return NONE;
     }
    */
 
@@ -64,12 +78,12 @@ parse_year:
 long long year = aoc::svtoll(std::string_view(YYCURSOR - 5, 4));
 if(year >= min_year && year <= max_year)
 {
-return 1;
+return res;
 }
-return -1;
+return NONE;
 }
 * {
-return -1;
+return NONE;
 }
    */
 
@@ -82,7 +96,7 @@ parse_hgt:
  goto parse_units;
  }
  * {
- return -1;
+ return NONE;
  }
     */
 
@@ -91,43 +105,45 @@ parse_units:
 "cm " {
 if(hgt >= 150 && hgt <= 193)
 {
-return 1;
+return HGT;
 }
-return -1;
+return NONE;
 }
 "in " {
 if(hgt >= 59 && hgt <= 76)
 {
-return 1;
+return HGT;
 }
-return -1;
+return NONE;
 }
 * {
-return -1;
+return NONE;
 }
    */
 }
 
 bool valid_passport(const std::string &data)
 {
-  int valid_count = 0;
+  int found = NONE;
   const char *pos = data.data();
   while (true)
   {
     int val = valid_token(pos);
     switch (val)
     {
-    case -1:
+    case NONE:
       return false;
+    case CID:
+      break;
     default:
-      valid_count += val;
+      found |= val;
     }
     if (pos >= data.data() + data.size())
     {
       break;
     }
   }
-  return valid_count >= 7;
+  return found == (BYR | IYR | EYR | ECL | HGT | HCL | PID);
 }
 
 int main(int argc, char **argv)

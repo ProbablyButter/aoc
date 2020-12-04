@@ -14,6 +14,16 @@ re2c:yyfill:check = 1;
 #include <string>
 #include <vector>
 
+#define  NONE 0
+#define BYR 1
+#define IYR 2
+#define EYR 4
+#define ECL 8
+#define HGT 16
+#define HCL 32
+#define PID 64
+#define CID 128
+
 int valid_token(const char *&YYCURSOR)
 {
   const char *YYMARKER;
@@ -21,55 +31,57 @@ int valid_token(const char *&YYCURSOR)
 
   /*!re2c
     "byr:"[^\x20]+" " {
-return 1;
+return BYR;
     }
     "iyr:"[^\x20]+" " {
-return 1;
+return IYR;
     }
     "eyr:"[^\x20]+" " {
-return 1;
+return EYR;
     }
     "ecl:"[^\x20]+" " {
-return 1;
+return ECL;
     }
     "hgt:"[^\x20]+" " {
-return 1;
+return HGT;
     }
     "hcl:"[^\x20]+" " {
-return 1;
+return HCL;
     }
     "pid:"[^\x20]+" " {
-return 1;
+return PID;
     }
     "cid:"[^\x20]+" " {
-return 0;
+return CID;
     }
     * {
-return -1;
+return NONE;
     }
    */
 }
 
 bool valid_passport(const std::string &data)
 {
-  int valid_count = 0;
+  int found = NONE;
   const char *pos = data.data();
   while (true)
   {
     int val = valid_token(pos);
     switch (val)
     {
-    case -1:
+    case NONE:
       return false;
+    case CID:
+      break;
     default:
-      valid_count += val;
+      found |= val;
     }
     if (pos >= data.data() + data.size())
     {
       break;
     }
   }
-  return valid_count >= 7;
+  return found == (BYR | IYR | EYR | ECL | HGT | HCL | PID);
 }
 
 int main(int argc, char **argv)
