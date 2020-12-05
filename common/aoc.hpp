@@ -9,7 +9,10 @@ std::filesystem::path get_resource_path(const std::string &name);
 
 namespace aoc
 {
-  long long svtoll(std::string_view str);
+  ///
+  /// @param base what base to assume the input is in, or 0 to try and auto-detect
+  ///
+  long long svtoll(const std::string_view& str, size_t base = 0);
 }
 
 #endif

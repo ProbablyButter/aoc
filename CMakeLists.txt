@@ -59,10 +59,7 @@ endfunction()
 # add user modules
 include("aoc-modules")
 
-add_library(aoc_common common/aoc.cpp)
-target_compile_features(aoc_common PUBLIC cxx_std_17)
-target_include_directories(aoc_common PUBLIC common)
-target_link_libraries(aoc_common PUBLIC whereami)
+add_subdirectory(common)
 
 add_subdirectory(2020)
 
