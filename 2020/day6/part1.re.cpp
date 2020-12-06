@@ -13,30 +13,30 @@ re2c:yyfill:check = 1;
 #include <iostream>
 #include <string>
 #include <vector>
+#include <unordered_set>
 
 int main(int argc, char **argv)
 {
   std::filesystem::path in_path = get_resource_path("input.txt");
   std::ifstream in(in_path);
   std::string str;
-  int max_id = 0;
+  int sum = 0;
+  std::unordered_set<char> questions;
   while (!in.eof())
   {
-    int row = 0;
-    int col = 0;
     std::getline(in, str);
-    for (int i = 0; i < 7; ++i)
+    if (str.size())
     {
-      row *= 2;
-      row += (str[i] == 'B');
+      for(auto c : str)
+      {
+        questions.insert(c);
+      }
     }
-    for (int i = 0; i < 3; ++i)
+    else
     {
-      col *= 2;
-      col += (str[i + 7] == 'R');
+      sum += questions.size();
+      questions.clear();
     }
-    int id = row * 8 + col;
-    max_id = std::max(id, max_id);
   }
-  std::cout << max_id << std::endl;
+  std::cout << sum << std::endl;
 }
