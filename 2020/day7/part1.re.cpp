@@ -1,7 +1,7 @@
 /*!re2c re2c:flags:utf-8 = 1;*/
 /*!max:re2c*/
 /*!re2c
-re2c:define:YYCTYPE = "char";
+re2c:define:YYCTYPE = char;
 re2c:yyfill:enable = 0;
 re2c:flags:tags = 1;
 re2c:yyfill:check = 1;
@@ -19,17 +19,18 @@ re2c:yyfill:check = 1;
 void parse_rule(const std::string &data,
                 std::unordered_map<std::string, std::unordered_map<std::string, int>> &rules)
 {
-  auto YYMARKER = data.begin();
-  auto YYCURSOR = data.begin();
-  auto yyt1 = YYMARKER;
-  auto lbl = data.end();
+  const char* YYCURSOR = data.data();
+  const char* YYMARKER;
   std::string name;
   std::unordered_map<std::string, int> rule;
   int curr_count = 0;
+  const char *start, *stop;
+
+  /*!stags:re2c format = 'const char *@@;'; */
 parse_name:
   /*!re2c
-[a-z\x20]+"bags" {
-name = std::string(data.begin(), YYCURSOR-5);
+@start [a-z][a-z\x20]+[a-z] @stop " bags" {
+name = std::string(start, stop);
 goto parse_list;
 }
 [\x00] {
@@ -42,14 +43,14 @@ goto parse_name;
 
 parse_list:
   /*!re2c
-  [0-9]
+  @start [0-9]
    {
-curr_count = curr_count * 10 + (YYCURSOR[-1] - '0');
+curr_count = curr_count * 10 + (*start - '0');
 goto parse_list;
    }
-@lbl [a-z][a-z\x20]+"bag"
+@start [a-z][a-z\x20]+[a-z] @stop " bag"
 {
-std::string to_add(lbl, YYCURSOR - 4);
+std::string to_add(start, stop);
 rule.emplace(std::move(to_add), curr_count);
 curr_count = 0;
 goto parse_list;
