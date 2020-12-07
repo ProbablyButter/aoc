@@ -19,8 +19,8 @@ re2c:yyfill:check = 1;
 void parse_rule(const std::string &data,
                 std::unordered_map<std::string, std::unordered_map<std::string, int>> &rules)
 {
-  const char* YYCURSOR = data.data();
-  const char* YYMARKER;
+  const char *YYCURSOR = data.data();
+  const char *YYMARKER;
   std::string name;
   std::unordered_map<std::string, int> rule;
   int curr_count = 0;
@@ -102,28 +102,19 @@ int main(int argc, char **argv)
   }
 
   std::unordered_set<std::string> can_hold;
-  for (auto &v : inverse_rules["shiny gold"])
-  {
-    can_hold.emplace(v);
-  }
+  std::vector<std::string> stack = inverse_rules["shiny gold"];
 
-  bool any_added = false;
-  do
+  while (!stack.empty())
   {
-    std::vector<std::string> to_add;
-    for (auto &v : can_hold)
+    std::string v = std::move(stack.back());
+    stack.pop_back();
+    if (can_hold.insert(v).second)
     {
-      for (auto &w : inverse_rules[v])
+      for (auto &t : inverse_rules[v])
       {
-        to_add.emplace_back(w);
+        stack.push_back(t);
       }
     }
-    auto prev_size = can_hold.size();
-    for (auto &v : to_add)
-    {
-      can_hold.emplace(v);
-    }
-    any_added = (can_hold.size() > prev_size);
-  } while (any_added);
+  }
   std::cout << can_hold.size() << std::endl;
 }

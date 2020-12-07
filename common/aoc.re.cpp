@@ -4,7 +4,7 @@
 re2c:define:YYCTYPE = "char";
 re2c:yyfill:enable = 0;
 re2c:flags:tags = 0;
-re2c:yyfill:check = 1;
+re2c:yyfill:check = 0;
 */
 
 #include "aoc.hpp"
@@ -28,8 +28,15 @@ namespace aoc
 {
   long long svtoll(const std::string_view &str, size_t base)
   {
-    auto YYCURSOR = str.begin();
-    auto YYLIMIT = str.end();
+    aoc::padded_range<decltype(str.begin())> prange;
+    prange.src_beg = str.begin();
+    prange.src_end = str.end();
+    prange.pad_value = '\0';
+
+    auto YYCURSOR = prange.begin();
+    auto YYLIMIT = prange.end();
+
+    /*!stags:re2c format = 'decltype(YYCURSOR) @@;'; */
 
     long long sign = 0;
     long long res = 0;
