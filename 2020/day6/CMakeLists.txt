@@ -7,8 +7,7 @@ add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/part1.cpp"
   WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
   )
 
-add_executable(day6_part1_2020 "${CMAKE_CURRENT_BINARY_DIR}/part1.cpp")
-target_link_libraries(day6_part1_2020 aoc_common)
+AOC_EXECUTABLE(part1 "${CMAKE_CURRENT_BINARY_DIR}/part1.cpp")
 
 add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/part2.cpp"
   COMMAND "${AOC_RE2C_EXEC}" "-W" "-o" "${CMAKE_CURRENT_BINARY_DIR}/part2.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/part2.re.cpp"
@@ -17,5 +16,4 @@ add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/part2.cpp"
   WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
   )
 
-add_executable(day6_part2_2020 "${CMAKE_CURRENT_BINARY_DIR}/part2.cpp")
-target_link_libraries(day6_part2_2020 aoc_common)
+AOC_EXECUTABLE(part2 "${CMAKE_CURRENT_BINARY_DIR}/part2.cpp")

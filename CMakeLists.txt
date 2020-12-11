@@ -56,6 +56,17 @@ function(SYMLINK_FILES)
   set_property(GLOBAL APPEND PROPERTY AOC_SYM_DSTS "${DSTS}")
 endfunction()
 
+function(AOC_EXECUTABLE name)
+  # join the 2 parent directories of executable
+  get_filename_component(DAY_DIR "${CMAKE_CURRENT_SOURCE_DIR}" DIRECTORY)
+  get_filename_component(YEAR_DIR "${DAY_DIR}" DIRECTORY)
+  get_filename_component(YEAR_DIR "${DAY_DIR}" NAME)
+  get_filename_component(DAY_DIR "${CMAKE_CURRENT_SOURCE_DIR}" NAME)
+  add_executable("${YEAR_DIR}_${DAY_DIR}_${name}" ${ARGN})
+  target_link_libraries("${YEAR_DIR}_${DAY_DIR}_${name}" aoc_common)
+  set_target_properties("${YEAR_DIR}_${DAY_DIR}_${name}" PROPERTIES OUTPUT_NAME "${name}")
+endfunction()
+
 # add user modules
 include("aoc-modules")
 
