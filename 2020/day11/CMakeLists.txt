@@ -17,12 +17,3 @@ add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/part2.cpp"
   )
 
 AOC_EXECUTABLE(part2 "${CMAKE_CURRENT_BINARY_DIR}/part2.cpp")
-
-add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/part2_graph.cpp"
-  COMMAND "${AOC_RE2C_EXEC}" "-W" "-o" "${CMAKE_CURRENT_BINARY_DIR}/part2_graph.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/part2_graph.re.cpp"
-  DEPENDS re2c
-  DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/part2_graph.re.cpp"
-  WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
-  )
-
-AOC_EXECUTABLE(part2_graph "${CMAKE_CURRENT_BINARY_DIR}/part2_graph.cpp")
