@@ -10,6 +10,7 @@ re2c:yyfill:check = 1;
 #include "aoc.hpp"
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <fstream>
 #include <iostream>
@@ -18,6 +19,29 @@ re2c:yyfill:check = 1;
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+
+template <typename T>
+static void apply_permutation_in_place(std::vector<T> &vec, const std::vector<size_t> &p)
+{
+  std::vector<bool> done(vec.size());
+  for (size_t i = 0; i < vec.size(); ++i)
+  {
+    if (done[i])
+    {
+      continue;
+    }
+    done[i] = true;
+    size_t prev_j = i;
+    size_t j = p[i];
+    while (i != j)
+    {
+      std::swap(vec[prev_j], vec[j]);
+      done[j] = true;
+      prev_j = j;
+      j = p[j];
+    }
+  }
+}
 
 long long part2_recurse(std::vector<long long> &pos,
                         std::vector<long long> &times,
@@ -65,7 +89,11 @@ long long part2_improved(const std::vector<long long> &pos,
 {
   long long t = times[0] - pos[0];
   long long mult = times[0];
-  int num_success = 1;
+  while (t < 0)
+  {
+    t += mult;
+  }
+  size_t num_success = 1;
   while (true)
   {
     size_t next_success = num_success;
@@ -97,19 +125,24 @@ long long part2_improved(const std::vector<long long> &pos,
 long long part2_naive(const std::vector<long long> &pos,
                       const std::vector<long long> &times)
 {
-  for (long long n = 1; true; ++n)
+  long long t = times[0] - pos[0];
+  while (t < 0)
   {
-    long long t = times[0] * n - pos[0];
-    int num_success = 1;
+    t += times[0];
+  }
+  while (true)
+  {
+    t += times[0];
+    bool success = true;
     for (size_t i = 1; i < times.size(); ++i)
     {
       if ((t + pos[i]) % times[i] != 0)
       {
+        success = false;
         break;
       }
-      ++num_success;
     }
-    if (num_success == times.size())
+    if (success)
     {
       return t;
     }
@@ -130,7 +163,7 @@ int main(int argc, char **argv)
   std::vector<long long> times;
   std::getline(in, line);
   {
-    size_t id = 0;
+    long long id = 0;
     size_t i = 0;
     size_t j = 0;
     for (; j < line.size(); ++j)
@@ -162,8 +195,28 @@ int main(int argc, char **argv)
     }
   }
 
+  // sort times by largest to smallest, only really """useful"" for naive implementation
+#if 0
+  {
+    std::vector<size_t> idcs;
+    idcs.reserve(times.size());
+    for (size_t i = 0; i < times.size(); ++i)
+    {
+      idcs.push_back(i);
+    }
+    std::sort(
+      idcs.begin(), idcs.end(), [&times](auto a, auto b) { return times[a] > times[b]; });
+    apply_permutation_in_place(times, idcs);
+    apply_permutation_in_place(pos, idcs);
+    for (size_t i = 0; i < times.size(); ++i)
+    {
+      std::cout << times[i] << ", " << pos[i] << std::endl;
+    }
+  }
+#endif
+
   // std::cout << part2_naive(pos, times) << std::endl;
-  //std::cout << part2_recurse(pos, times, 0, times[0], times[0]) << std::endl;
+  // std::cout << part2_recurse(pos, times, 0, times[0], times[0]) << std::endl;
   std::cout << part2_improved(pos, times) << std::endl;
   return 0;
 }
