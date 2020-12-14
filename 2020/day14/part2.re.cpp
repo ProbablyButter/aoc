@@ -38,7 +38,7 @@ void write_mem(std::unordered_map<uint64_t, uint64_t> &mem,
         int shift_amount = (float_mask.size() - j - 1);
         // first unset the bit
         waddr = waddr & ~(1ull << shift_amount);
-        // extract the shift_amount'th bit from i, then shift that to the correct position
+        // extract the next MSB bit from i, then shift that to the correct position
         uint64_t extracted_bit = 0;
         if (i & (1ull << (num_bits - bit - 1)))
         {
