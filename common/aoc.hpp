@@ -32,7 +32,7 @@ namespace aoc
     public:
       Iterator(const Iterator& o) = default;
       
-      std::add_lvalue_reference_t<decltype(pad_)> operator*()
+      decltype(*pos) operator*()
       {
         if (pos < src_end)
         {
@@ -41,7 +41,7 @@ namespace aoc
         return pad_;
       }
 
-      std::add_lvalue_reference_t<std::add_const_t<decltype(pad_)>> operator*() const
+      std::add_const_t<decltype(*pos)> operator*() const
       {
         if (pos < src_end)
         {
@@ -50,7 +50,7 @@ namespace aoc
         return pad_;
       }
 
-      std::add_lvalue_reference_t<std::add_const_t<decltype(pad_)>> operator[](long long i) const
+      std::add_const_t<decltype(pos[0])> operator[](long long i) const
       {
         if (pos + i < src_end)
         {
@@ -59,7 +59,7 @@ namespace aoc
         return pad_;
       }
 
-      std::add_lvalue_reference_t<decltype(pad_)> operator[](long long i)
+      decltype(pos[0]) operator[](long long i)
       {
         if (pos + i < src_end)
         {

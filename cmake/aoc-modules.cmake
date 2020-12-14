@@ -262,11 +262,7 @@ set_target_properties(re2c
   PROPERTIES
   RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/bin"
   )
-if(WIN32)
-  set(AOC_RE2C_EXEC "${PROJECT_BINARY_DIR}/bin/$<CONFIG>/re2c.exe")
-else()
-  set(AOC_RE2C_EXEC "${PROJECT_BINARY_DIR}/bin/re2c")
-endif()
+set(AOC_RE2C_EXEC "$<TARGET_FILE:re2c>")
 
 add_library(whereami deps/whereami/src/whereami.c)
 target_include_directories(whereami PUBLIC deps/whereami/src)

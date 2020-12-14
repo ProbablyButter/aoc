@@ -26,34 +26,17 @@ endif()
 
 ##
 # @brief Symbolically links a list of files to build directory
-# @param ARGN files to link
+# @param ARGN files to link. Must be relative paths!
 function(SYMLINK_FILES)
   # make absolute paths
-  get_property(is_defined GLOBAL PROPERTY AOC_SYM_SRCS DEFINED)
-  if(NOT is_defined)
-    define_property(GLOBAL PROPERTY AOC_SYM_SRCS
-      BRIEF_DOCS "List of all symlink files to link to build directory"
-      FULL_DOCS "List of all symlink files to link to build directory")
-  endif()
-
-  get_property(is_defined GLOBAL PROPERTY AOC_SYM_DSTS DEFINED)
-  if(NOT is_defined)
-    define_property(GLOBAL PROPERTY AOC_SYM_DSTS
-      BRIEF_DOCS "List of all symlink files to link to build directory"
-      FULL_DOCS "List of all symlink files to link to build directory")
-  endif()
-  
-  set(SRCS)
-  set(DSTS)
   foreach(s IN LISTS ARGN)
-    list(APPEND DSTS "${CMAKE_CURRENT_BINARY_DIR}/${s}")
     if(NOT IS_ABSOLUTE "${s}")
-      get_filename_component(s "${s}" ABSOLUTE)
+      get_filename_component(sabs "${s}" ABSOLUTE)
+	  file(CREATE_LINK "${sabs}" "${CMAKE_CURRENT_BINARY_DIR}/${s}")
+	else()
+	  message(ERROR "can't call SYMLINK_FILES with an absolute path")
     endif()
-    list(APPEND SRCS "${s}")
   endforeach()
-  set_property(GLOBAL APPEND PROPERTY AOC_SYM_SRCS "${SRCS}")
-  set_property(GLOBAL APPEND PROPERTY AOC_SYM_DSTS "${DSTS}")
 endfunction()
 
 function(AOC_EXECUTABLE name)
@@ -73,28 +56,4 @@ include("aoc-modules")
 add_subdirectory(common)
 
 add_subdirectory(2020)
-
-function(GENERATE_SYM_LINKS)
-    message(STATUS "Generating symbolic links")
-    get_property(SRCS GLOBAL PROPERTY AOC_SYM_SRCS)
-    get_property(DSTS GLOBAL PROPERTY AOC_SYM_DSTS)
-    list(LENGTH SRCS len1)
-    if(len1)
-        math(EXPR len2 "${len1}-1")
-        foreach(var RANGE ${len2})
-            list(GET SRCS ${var} src)
-            list(GET DSTS ${var} dst)
-            add_custom_command(OUTPUT "${dst}"
-                COMMAND ln -sf "${src}" "${dst}"
-                DEPENDS "${src}"
-                )
-            set_source_files_properties("${dst}"
-                PROPERTIES GENERATED TRUE)
-        endforeach()
-        add_custom_target(AOC_SYM_LINKS ALL
-            DEPENDS ${DSTS})
-    endif()
-endfunction()
-
-GENERATE_SYM_LINKS()
 
