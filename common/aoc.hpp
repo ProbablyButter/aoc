@@ -13,8 +13,8 @@ std::filesystem::path get_resource_path(const std::string &name);
 namespace aoc
 {
   ///
-  /// @brief A range which infinitely pads another with a given value. Useful for using re2c on
-  /// std::string_view.
+  /// @brief A range which infinitely pads another with a given value. Useful for using
+  /// re2c on std::string_view.
   ///
   template <class Iter> struct padded_range
   {
@@ -22,16 +22,20 @@ namespace aoc
     using value_type = std::remove_reference_t<decltype(*std::declval<Iter>())>;
     std::decay_t<value_type> pad_value;
 
-    class Iterator : public std::iterator<std::random_access_iterator_tag, decltype(pad_value)>
+    class Iterator
+      : public std::iterator<std::random_access_iterator_tag, decltype(pad_value)>
     {
       Iter pos, src_end;
       value_type pad_;
 
-      Iterator(Iter beg, Iter stop, decltype(pad_) pad) : pos(beg), src_end(stop), pad_(pad) {}
+      Iterator(Iter beg, Iter stop, decltype(pad_) pad)
+        : pos(beg), src_end(stop), pad_(pad)
+      {
+      }
 
     public:
-      Iterator(const Iterator& o) = default;
-      
+      Iterator(const Iterator &o) = default;
+
       decltype(*pos) operator*()
       {
         if (pos < src_end)
@@ -75,6 +79,14 @@ namespace aoc
 
       bool operator!=(const Iterator &o) const { return !(*this == o); }
 
+      bool operator<(const Iterator &o) const { return pos < o.pos; }
+
+      bool operator<=(const Iterator &o) const { return pos <= o.pos; }
+
+      bool operator>(const Iterator &o) const { return pos > o.pos; }
+
+      bool operator>=(const Iterator &o) const { return pos >= o.pos; }
+
       Iterator &operator++()
       {
         ++pos;
@@ -85,6 +97,20 @@ namespace aoc
       {
         --pos;
         return *this;
+      }
+
+      Iterator operator++(int)
+      {
+        Iterator res(*this);
+        ++pos;
+        return res;
+      }
+
+      Iterator operator--(int)
+      {
+        Iterator res(*this);
+        --pos;
+        return res;
       }
 
       Iterator &operator+=(long long i)
