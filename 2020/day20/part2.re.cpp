@@ -21,6 +21,30 @@ re2c:yyfill:check = 1;
 #include <unordered_set>
 #include <vector>
 
+void rot_ccw(std::vector<std::string> &tile)
+{
+  // diagonal going in
+  for (size_t i = 0; i < tile.size() / 2; ++i)
+  {
+    for (size_t j = i; j < tile.size() - i - 1; ++j)
+    {
+      auto tmp0 = tile[i][j];
+      tile[i][j] = tile[j][tile.size() - 1 - i];
+      tile[j][tile.size() - 1 - i] = tile[tile.size() - 1 - i][tile.size() - 1 - j];
+      tile[tile.size() - 1 - i][tile.size() - 1 - j] = tile[tile.size() - 1 - j][i];
+      tile[tile.size() - 1 - j][i] = tmp0;
+    }
+  }
+}
+
+void flip_x(std::vector<std::string> &tile)
+{
+  for (auto &v : tile)
+  {
+    std::reverse(v.begin(), v.end());
+  }
+}
+
 template <class T>
 bool edge_matches(const T &tile1,
                   const T &tile2,
@@ -37,6 +61,50 @@ bool edge_matches(const T &tile1,
     }
   }
   return true;
+}
+
+int mark_seamonsters(std::vector<std::string> &image,
+                     const std::vector<std::string> &monster,
+                     const std::vector<std::pair<int, int>> &positions)
+{
+  int num_found = 0;
+  for (size_t i = 0; i < image.size() - monster.size(); ++i)
+  {
+    for (size_t j = 0; j < image[0].size() - monster[0].size(); ++j)
+    {
+      bool matches = true;
+      for (auto &p : positions)
+      {
+        if (image[i + p.first][j + p.second] != '#')
+        {
+          matches = false;
+          break;
+        }
+      }
+      if (matches)
+      {
+        ++num_found;
+        for (auto &p : positions)
+        {
+          image[i + p.first][j + p.second] = 'o';
+        }
+      }
+    }
+  }
+  return num_found;
+}
+
+int count_roughness(const std::vector<std::string> &image)
+{
+  int count = 0;
+  for (auto &l : image)
+  {
+    for (auto c : l)
+    {
+      count += (c == '#');
+    }
+  }
+  return count;
 }
 
 int main(int argc, char **argv)
@@ -77,11 +145,10 @@ int main(int argc, char **argv)
   }
 
   std::vector<std::vector<int>> neighbors;
-  std::vector<std::vector<std::pair<int, int>>> match_order;
   std::vector<int> corners;
   std::vector<int> edges;
+  std::vector<Tile> tiles_copy = tiles;
   neighbors.resize(tiles.size());
-  match_order.resize(tiles.size());
 
   int width = tiles[0][0].size();
   std::array<int, 4> lface = {0, 0, 0, 1};
@@ -104,33 +171,211 @@ int main(int argc, char **argv)
       {
         continue;
       }
-      for(size_t k = 0; k < all_combos.size(); ++k)
+      for (auto &fi : all_combos)
       {
-        auto& fi = all_combos[k];
-        for (size_t l = 0; l < all_faces.size(); ++l)
+        for (auto &fj : all_faces)
         {
-          auto& fj = all_faces[l];
           if (edge_matches(tiles[i], tiles[j], fi, fj, width))
           {
             neighbors[i].push_back(j);
-            match_order[i].emplace_back(k, l);
           }
         }
       }
     }
-    if (match_order[i].size() == 2)
+    if (neighbors[i].size() == 2)
     {
       corners.push_back(i);
     }
-    else if (match_order[i].size() == 3)
+    else if (neighbors[i].size() == 3)
     {
       edges.push_back(i);
     }
   }
   // now problem is reduced, start from one corner piece and expand outwards
   // assume first corner is the top-left
-  std::vector<int> order(neighbors.size(), -1);
+  // 8 possible orientations: original, rot90, rot180, rot270, flip_x, flip_x+rot90,
+  // flip_x+rot180, flip_x+rot270
+  std::vector<int> order;
+  order.resize(tiles.size());
+  int ntile_width = sqrt(tiles.size());
   order[0] = corners[0];
-  // orientate top-left so it has the two edges appropriately matched
-  
+
+  // first tile needs to be orientated
+  {
+    // 3 rotations
+    for (size_t i = 0; i < 4; ++i)
+    {
+      for (auto &fi : all_combos)
+      {
+        for (auto &fj : all_combos)
+        {
+          // is first neighbor is to the right?
+          if (edge_matches(
+                tiles[order[0]], tiles[neighbors[order[0]][0]], rface, fi, width) &&
+              edge_matches(
+                tiles[order[0]], tiles[neighbors[order[0]][1]], bface, fj, width))
+          {
+            order[1] = neighbors[order[0]][0];
+            order[ntile_width] = neighbors[order[0]][1];
+            goto oriented;
+          }
+          // is first neighbor is to the bottom?
+          if (edge_matches(
+                tiles[order[0]], tiles[neighbors[order[0]][0]], bface, fi, width) &&
+              edge_matches(
+                tiles[order[0]], tiles[neighbors[order[0]][1]], rface, fj, width))
+          {
+            order[1] = neighbors[order[0]][1];
+            order[ntile_width] = neighbors[order[0]][0];
+            goto oriented;
+          }
+        }
+      }
+      rot_ccw(tiles[order[0]]);
+    }
+    // flip x
+    flip_x(tiles[order[0]]);
+    // 4 rotations
+    for (size_t i = 0; i < 4; ++i)
+    {
+      for (auto &fi : all_combos)
+      {
+        for (auto &fj : all_combos)
+        {
+          // is first neighbor is to the right?
+          if (edge_matches(
+                tiles[order[0]], tiles[neighbors[order[0]][0]], rface, fi, width) &&
+              edge_matches(
+                tiles[order[0]], tiles[neighbors[order[0]][1]], bface, fj, width))
+          {
+            order[1] = neighbors[order[0]][0];
+            order[ntile_width] = neighbors[order[0]][1];
+            goto oriented;
+          }
+          // is first neighbor is to the bottom?
+          if (edge_matches(
+                tiles[order[0]], tiles[neighbors[order[0]][0]], bface, fi, width) &&
+              edge_matches(
+                tiles[order[0]], tiles[neighbors[order[0]][1]], rface, fj, width))
+          {
+            order[1] = neighbors[order[0]][1];
+            order[ntile_width] = neighbors[order[0]][0];
+            goto oriented;
+          }
+        }
+      }
+      rot_ccw(tiles[order[0]]);
+    }
+  }
+  throw std::runtime_error("couldn't orient first tile");
+oriented:
+  for (size_t i = 1; i < order.size(); ++i)
+  {
+    // orient tile[order[i]]
+    int orient_idx = (i % ntile_width == 0) ? (order[i - ntile_width]) : (order[i - 1]);
+    auto &orient_to = tiles[orient_idx];
+    auto &orig_face = (i % ntile_width == 0) ? bface : rface;
+    auto &new_face = (i % ntile_width == 0) ? tface : lface;
+
+    for (size_t j = 0; j < 4; ++j)
+    {
+      if (edge_matches(orient_to, tiles[order[i]], orig_face, new_face, width))
+      {
+        goto next;
+      }
+      rot_ccw(tiles[order[i]]);
+    }
+    flip_x(tiles[order[i]]);
+    for (size_t j = 0; j < 4; ++j)
+    {
+      if (edge_matches(orient_to, tiles[order[i]], orig_face, new_face, width))
+      {
+        goto next;
+      }
+      rot_ccw(tiles[order[i]]);
+    }
+    if (edge_matches(orient_to, tiles[order[i]], orig_face, new_face, width))
+    {
+      goto next;
+    }
+    throw std::runtime_error("failed to align neighbor tile");
+  next:
+    // figure out which tile belongs to the right/below
+    for (auto &n : neighbors[order[i]])
+    {
+      for (auto &f : all_combos)
+      {
+        if (edge_matches(tiles[order[i]], tiles[n], rface, f, width))
+        {
+          order[i + 1] = n;
+        }
+        if (edge_matches(tiles[order[i]], tiles[n], bface, f, width))
+        {
+          order[i + ntile_width] = n;
+        }
+      }
+    }
+  }
+
+  // combine everything into a single image
+  // trim off edges
+  for (auto &tile : tiles)
+  {
+    tile.erase(tile.begin());
+    tile.erase(tile.end() - 1);
+    for (auto &l : tile)
+    {
+      l = l.substr(1, l.size() - 2);
+    }
+  }
+  width -= 2;
+
+  std::vector<std::string> image;
+  image.resize(ntile_width * width);
+  for (size_t i = 0; i < ntile_width; ++i)
+  {
+    for (size_t k = 0; k < tiles[0].size(); ++k)
+    {
+      for (size_t j = 0; j < ntile_width; ++j)
+      {
+        image[i * tiles[0].size() + k] += tiles[order[i * ntile_width + j]][k];
+      }
+    }
+  }
+
+  // now can finally start looking for seamonsters
+  std::vector<std::string> monster = {
+    "                  # ", "#    ##    ##    ###", " #  #  #  #  #  #   "};
+  std::vector<std::pair<int, int>> positions;
+  for (size_t i = 0; i < monster.size(); ++i)
+  {
+    for (size_t j = 0; j < monster[i].size(); ++j)
+    {
+      if (monster[i][j] == '#')
+      {
+        positions.emplace_back(i, j);
+      }
+    }
+  }
+  for (size_t i = 0; i < 4; ++i)
+  {
+    auto copy = image;
+    if (mark_seamonsters(copy, monster, positions))
+    {
+      std::cout << count_roughness(copy) << std::endl;
+      return 0;
+    }
+    rot_ccw(image);
+  }
+  flip_x(image);
+  for (size_t i = 0; i < 4; ++i)
+  {
+    auto copy = image;
+    if (mark_seamonsters(copy, monster, positions))
+    {
+      std::cout << count_roughness(copy) << std::endl;
+      return 0;
+    }
+    rot_ccw(image);
+  }
 }
