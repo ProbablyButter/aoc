@@ -11,8 +11,8 @@ namespace aoc
   ///
   struct hasher
   {
-    uint64_t h1, h2;
-    uint64_t nbytes;
+    uint64_t h1 = 0, h2 = 0;
+    uint64_t nbytes = 0;
 
     void init(uint64_t seed = 0);
 

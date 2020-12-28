@@ -8,6 +8,7 @@ re2c:yyfill:check = 1;
 */
 
 #include "aoc.hpp"
+#include "hash.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -21,6 +22,21 @@ re2c:yyfill:check = 1;
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+
+namespace std
+{
+  template <> struct hash<std::pair<int, int>>
+  {
+
+    uint64_t operator()(const std::pair<int, int> &v) const
+    {
+      aoc::hasher hash_;
+      hash_.finalize(
+        (static_cast<uint64_t>(v.first) << 32) | static_cast<uint64_t>(v.second), 8);
+      return hash_.h1;
+    }
+  };
+} // namespace std
 
 void find_tile_loc(const char *YYCURSOR, int &x, int &y)
 {
@@ -65,9 +81,9 @@ goto parse_start;
   */
 }
 
-void update(const std::set<std::pair<int, int>> &orig,
-            std::set<std::pair<int, int>> &res,
-            std::set<std::pair<int, int>> &work_buf)
+void update(const std::unordered_set<std::pair<int, int>> &orig,
+            std::unordered_set<std::pair<int, int>> &res,
+            std::unordered_set<std::pair<int, int>> &work_buf)
 {
   res.clear();
   work_buf.clear();
@@ -160,7 +176,7 @@ int main(int argc, char **argv)
   std::ifstream in(in_path);
   std::string line;
   // coordinates are slighty rotated
-  std::set<std::pair<int, int>> flipped;
+  std::unordered_set<std::pair<int, int>> flipped;
 
   // parse input
   {
@@ -189,10 +205,10 @@ int main(int argc, char **argv)
     }
   }
   // run updater
-  std::set<std::pair<int, int>> work_buf;
+  std::unordered_set<std::pair<int, int>> work_buf;
   for (size_t i = 0; i < 100; ++i)
   {
-    std::set<std::pair<int, int>> res;
+    std::unordered_set<std::pair<int, int>> res;
     update(flipped, res, work_buf);
     flipped = std::move(res);
   }
