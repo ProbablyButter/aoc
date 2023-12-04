@@ -100,7 +100,6 @@ int main(int argc, char **argv) {
   }
   std::vector<int> card_counts;
   card_counts.resize(games.size(), 1);
-  std::cout << card_counts.size() << std::endl;
   for (auto &g : games) {
     int count = 0;
     for (auto &v : g.vals) {
