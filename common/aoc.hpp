@@ -1,6 +1,7 @@
 #ifndef AOC_HPP
 #define AOC_HPP
 
+#include <algorithm>
 #include <array>
 #include <filesystem>
 #include <iterator>
@@ -8,6 +9,7 @@
 #include <string_view>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 std::filesystem::path get_resource_path(const std::string &name);
 
@@ -18,7 +20,8 @@ namespace aoc {
 ///
 template <class Iter> struct padded_range {
   Iter src_beg, src_end;
-  using value_type = std::decay_t<std::remove_reference_t<decltype(*std::declval<Iter>())>>;
+  using value_type =
+      std::decay_t<std::remove_reference_t<decltype(*std::declval<Iter>())>>;
   value_type pad_value;
 
   class Iterator {
@@ -125,6 +128,34 @@ template <class Iter> struct padded_range {
 /// @param base what base to assume the input is in, or 0 to try and auto-detect
 ///
 long long svtoll(const std::string_view &str, size_t base = 0);
+
+template <typename T, class U>
+std::vector<T> apply_permutation(const std::vector<T> &vec,
+                                 const std::vector<U> &p) {
+  std::vector<T> sorted_vec(vec.size());
+  std::transform(p.begin(), p.end(), sorted_vec.begin(),
+                 [&](auto i) { return vec[i]; });
+  return sorted_vec;
+}
+
+template <typename T, class U>
+void apply_permutation_in_place(std::vector<T> &vec, const std::vector<U> &p) {
+  std::vector<bool> done(vec.size());
+  for (U i = 0; i < vec.size(); ++i) {
+    if (done[i]) {
+      continue;
+    }
+    done[i] = true;
+    U prev_j = i;
+    U j = p[i];
+    while (i != j) {
+      std::swap(vec[prev_j], vec[j]);
+      done[j] = true;
+      prev_j = j;
+      j = p[j];
+    }
+  }
+}
 } // namespace aoc
 
 #endif
