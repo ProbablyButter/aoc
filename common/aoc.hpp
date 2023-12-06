@@ -27,7 +27,8 @@ template <class Iter> struct padded_range {
   class Iterator {
   public:
     using iterator_category = std::random_access_iterator_tag;
-    using value_type = value_type;
+    using value_type =
+        std::decay_t<std::remove_reference_t<decltype(*std::declval<Iter>())>>;
     using difference_type = long long;
     using pointer = typename std::add_pointer<value_type>::type;
     using reference = typename std::add_lvalue_reference<value_type>::type;
