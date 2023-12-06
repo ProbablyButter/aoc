@@ -9,6 +9,7 @@ add_library(aoc_common
   "${CMAKE_CURRENT_BINARY_DIR}/aoc.cpp"
   hash.cpp
   segmented_range.cpp
+  string_tools.cpp
 )
 target_compile_features(aoc_common PUBLIC cxx_std_17)
 target_include_directories(aoc_common PUBLIC common)
@@ -16,3 +17,7 @@ target_link_libraries(aoc_common PUBLIC whereami)
 
 add_executable(test_segmented_range test_segmented_range.cpp)
 target_link_libraries(test_segmented_range PUBLIC aoc_common)
+
+
+add_executable(test_string_tools test_string_tools.cpp)
+target_link_libraries(test_string_tools PUBLIC aoc_common)
