@@ -8,6 +8,7 @@ re2c:yyfill:check = 1;
 */
 
 #include "aoc.hpp"
+#include "segmented_range.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -24,154 +25,20 @@ re2c:yyfill:check = 1;
 #include <vector>
 
 // assume no overlap
-struct discont_range {
-  std::vector<std::pair<long long, long long>> ranges;
-
-  void sort() {
-    std::sort(ranges.begin(), ranges.end(), [](auto &a, auto &b) {
-      if (a.first != b.first) {
-        return a.first < b.first;
-      }
-      return a.second < b.second;
-    });
-  }
-
-  discont_range intersect(discont_range &o) {
-    discont_range res;
-    if (ranges.empty() || o.ranges.empty()) {
-      // no intersection
-      return res;
-    }
-    sort();
-    o.sort();
-
-    size_t i = 0;
-    size_t j = 0;
-    long long curr = ranges[0].first;
-
-    while (true) {
-      if (i >= ranges.size()) {
-        // nothing left to compare
-        break;
-      }
-      if (j >= o.ranges.size()) {
-        // nothing left to compare
-        break;
-      }
-      if (curr >= ranges[i].second) {
-        ++i;
-        continue;
-      }
-      if (curr >= o.ranges[j].second) {
-        ++j;
-        continue;
-      }
-      // some chance for an intersection
-      long long a = std::max(ranges[i].first, o.ranges[j].first);
-      long long b = std::min(ranges[i].second, o.ranges[j].second);
-      if (a < b) {
-        // some intersection
-        res.ranges.emplace_back(a, b);
-        curr = b;
-
-      } else {
-        curr = a;
-      }
-    }
-
-    return res;
-  }
-
-  // everything in this not in o
-  discont_range subtract(discont_range &o) {
-    if (o.ranges.empty()) {
-      return *this;
-    }
-    discont_range res;
-    if (ranges.empty()) {
-      return res;
-    }
-    sort();
-    o.sort();
-
-    size_t i = 0;
-    size_t j = 0;
-    long long curr = ranges[0].first;
-
-    while (true) {
-      if (i >= ranges.size()) {
-        // nothing left to compare
-        break;
-      }
-      if (j >= o.ranges.size()) {
-        // nothing left to compare, add everything else
-        if (curr < ranges[i].second) {
-          res.ranges.emplace_back(curr, ranges[i].second);
-          ++i;
-        }
-        for (; i < ranges.size(); ++i) {
-          res.ranges.push_back(ranges[i]);
-        }
-        break;
-      }
-      if (curr >= ranges[i].second) {
-        ++i;
-        continue;
-      }
-      if (curr >= o.ranges[j].second) {
-        ++j;
-        continue;
-      }
-      if (curr < ranges[i].first) {
-        curr = ranges[i].first;
-      }
-      if (curr < o.ranges[j].first) {
-        // add segment
-        if (ranges[i].second < o.ranges[j].first) {
-          res.ranges.emplace_back(curr, ranges[i].second);
-          ++i;
-          if (i < ranges.size()) {
-            curr = ranges[i].first;
-          } else {
-            break;
-          }
-        } else {
-          res.ranges.emplace_back(curr, o.ranges[j].first);
-          curr = o.ranges[j].second;
-        }
-      } else {
-        curr = o.ranges[j].second;
-      }
-    }
-
-    return res;
-  }
-};
-
 struct range_map {
-  discont_range srcs;
-  discont_range dsts;
+  aoc::segmented_range srcs;
+  aoc::segmented_range dsts;
+  aoc::segmented_range norm_srcs;
 
   void sort() {
-    std::vector<size_t> idcs;
-    idcs.reserve(srcs.ranges.size());
-    for (size_t i = 0; i < srcs.ranges.size(); ++i) {
-      idcs.push_back(i);
-    }
-    std::sort(idcs.begin(), idcs.end(), [&](auto &a, auto &b) {
-      if (srcs.ranges[a].first != srcs.ranges[b].first) {
-        return srcs.ranges[a].first < srcs.ranges[b].first;
-      }
-      return srcs.ranges[a].second < srcs.ranges[b].second;
-    });
-    aoc::apply_permutation_in_place(srcs.ranges, idcs);
-    aoc::apply_permutation_in_place(dsts.ranges, idcs);
+    auto idcs = srcs.get_sort_permute();
+    aoc::apply_permutation_in_place(srcs.segments, idcs);
+    aoc::apply_permutation_in_place(dsts.segments, idcs);
   }
 
-  discont_range map(discont_range &val) {
-    auto tmp_srcs = srcs;
-    discont_range res = val.subtract(tmp_srcs);
-    discont_range inter = val.intersect(tmp_srcs);
+  aoc::segmented_range map(const aoc::segmented_range &val) {
+    auto res = val.subtract(norm_srcs);
+    auto inter = val.intersect(norm_srcs);
 
     // for everything in inter, apply map to dsts
     // i indexes into inter
@@ -179,22 +46,22 @@ struct range_map {
     size_t i = 0;
     size_t j = 0;
     while (true) {
-      if (i >= inter.ranges.size()) {
+      if (i >= inter.segments.size()) {
         // nothing left
         break;
       }
       // find j where i belongs to
-      long long a = std::max(inter.ranges[i].first, srcs.ranges[j].first);
-      long long b = std::min(inter.ranges[i].second, srcs.ranges[j].second);
+      int64_t a = std::max(inter.segments[i].first, srcs.segments[j].first);
+      int64_t b = std::min(inter.segments[i].second, srcs.segments[j].second);
       if (a < b) {
         // TODO: add mapped range
-        res.ranges.emplace_back(
-            (a - srcs.ranges[j].first) + dsts.ranges[j].first,
-            (b - srcs.ranges[j].first) + dsts.ranges[j].first);
+        res.segments.emplace_back(
+            (a - srcs.segments[j].first) + dsts.segments[j].first,
+            (b - srcs.segments[j].first) + dsts.segments[j].first);
         ++i;
       } else {
         // either advance i, or advance j
-        if (a == inter.ranges[i].first) {
+        if (a == inter.segments[i].first) {
           ++j;
         } else {
           ++i;
@@ -218,27 +85,31 @@ void read_map(std::istream &in, range_map &res) {
     }
     // split into 3 ints
     std::istringstream str(line);
-    long long a, b, c;
+    int64_t a, b, c;
     str >> a;
     str >> b;
     str >> c;
     // dst start, src start, len
-    res.srcs.ranges.emplace_back(b, b + c);
-    res.dsts.ranges.emplace_back(a, a + c);
+    res.srcs.add(b, b + c);
+    res.dsts.add(a, a + c);
   }
   res.sort();
+  res.norm_srcs = res.srcs;
+  res.norm_srcs.normalize();
 }
 
 #define PRIVATE_CONCAT(a, b) PRIVATE_CONCAT2(a, b)
 #define PRIVATE_CONCAT2(a, b) b##_to_##a
 
-#define apply_map(a, b) auto a = PRIVATE_CONCAT(a, b).map(b)
+#define apply_map(a, b)                                                        \
+  auto a = PRIVATE_CONCAT(a, b).map(b);                                        \
+  a.normalize()
 
 int main(int argc, char **argv) {
   std::filesystem::path in_path = get_resource_path("input.txt");
   std::ifstream in(in_path);
   std::string line;
-  std::vector<discont_range> seeds;
+  aoc::segmented_range seed;
 
   range_map seed_to_soil;
   range_map soil_to_fertilizer;
@@ -255,11 +126,10 @@ int main(int argc, char **argv) {
     std::string tmp;
     str >> tmp;
     while (true) {
-      long long a, b;
+      int64_t a, b;
       str >> a;
       str >> b;
-      seeds.emplace_back();
-      seeds.back().ranges.emplace_back(a, a + b);
+      seed.add(a, a + b);
       if (str.eof()) {
         break;
       }
@@ -288,24 +158,23 @@ int main(int argc, char **argv) {
   read_map(in, humidity_to_location);
 
   // map seed to location
-  long long min_loc = 0xFFFFFFFFFFFFll;
-  for (auto &seed : seeds) {
-    apply_map(soil, seed);
 
-    apply_map(fertilizer, soil);
+  seed.normalize();
+  int64_t min_loc = 0xFFFFFFFFFFFFll;
+  apply_map(soil, seed);
 
-    apply_map(water, fertilizer);
+  apply_map(fertilizer, soil);
 
-    apply_map(light, water);
+  apply_map(water, fertilizer);
 
-    apply_map(temperature, light);
+  apply_map(light, water);
 
-    apply_map(humidity, temperature);
+  apply_map(temperature, light);
 
-    apply_map(location, humidity);
+  apply_map(humidity, temperature);
 
-    location.sort();
-    min_loc = std::min(location.ranges[0].first, min_loc);
-  }
+  apply_map(location, humidity);
+
+  min_loc = std::min(location.segments[0].first, min_loc);
   std::cout << min_loc << std::endl;
 }

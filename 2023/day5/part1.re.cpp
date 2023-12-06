@@ -8,6 +8,7 @@ re2c:yyfill:check = 1;
 */
 
 #include "aoc.hpp"
+#include "segmented_range.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -23,20 +24,52 @@ re2c:yyfill:check = 1;
 #include <unordered_set>
 #include <vector>
 
+// assume no overlap
 struct range_map {
-  std::vector<long long> src_starts;
-  std::vector<long long> dst_starts;
-  std::vector<long long> lengths;
+  aoc::segmented_range srcs;
+  aoc::segmented_range dsts;
+  aoc::segmented_range norm_srcs;
 
-  long long map(long long val) {
-    for (size_t i = 0; i < src_starts.size(); ++i) {
-      auto v = src_starts[i];
-      if (val >= v && val < v + lengths[i]) {
-        // in this range
-        return dst_starts[i] + (val - v);
+  void sort() {
+    auto idcs = srcs.get_sort_permute();
+    aoc::apply_permutation_in_place(srcs.segments, idcs);
+    aoc::apply_permutation_in_place(dsts.segments, idcs);
+  }
+
+  aoc::segmented_range map(const aoc::segmented_range &val) {
+    auto res = val.subtract(norm_srcs);
+    auto inter = val.intersect(norm_srcs);
+
+    // for everything in inter, apply map to dsts
+    // i indexes into inter
+    // j indexes into srcs/dsts
+    size_t i = 0;
+    size_t j = 0;
+    while (true) {
+      if (i >= inter.segments.size()) {
+        // nothing left
+        break;
+      }
+      // find j where i belongs to
+      int64_t a = std::max(inter.segments[i].first, srcs.segments[j].first);
+      int64_t b = std::min(inter.segments[i].second, srcs.segments[j].second);
+      if (a < b) {
+        // TODO: add mapped range
+        res.segments.emplace_back(
+            (a - srcs.segments[j].first) + dsts.segments[j].first,
+            (b - srcs.segments[j].first) + dsts.segments[j].first);
+        ++i;
+      } else {
+        // either advance i, or advance j
+        if (a == inter.segments[i].first) {
+          ++j;
+        } else {
+          ++i;
+        }
       }
     }
-    return val;
+
+    return res;
   }
 };
 
@@ -52,27 +85,31 @@ void read_map(std::istream &in, range_map &res) {
     }
     // split into 3 ints
     std::istringstream str(line);
-    long long a, b, c;
+    int64_t a, b, c;
     str >> a;
     str >> b;
     str >> c;
     // dst start, src start, len
-    res.src_starts.push_back(b);
-    res.dst_starts.push_back(a);
-    res.lengths.push_back(c);
+    res.srcs.add(b, b + c);
+    res.dsts.add(a, a + c);
   }
+  res.sort();
+  res.norm_srcs = res.srcs;
+  res.norm_srcs.normalize();
 }
 
 #define PRIVATE_CONCAT(a, b) PRIVATE_CONCAT2(a, b)
 #define PRIVATE_CONCAT2(a, b) b##_to_##a
 
-#define apply_map(a, b) auto a = PRIVATE_CONCAT(a, b).map(b)
+#define apply_map(a, b)                                                        \
+  auto a = PRIVATE_CONCAT(a, b).map(b);                                        \
+  a.normalize()
 
 int main(int argc, char **argv) {
   std::filesystem::path in_path = get_resource_path("input.txt");
   std::ifstream in(in_path);
   std::string line;
-  std::vector<long long> seeds;
+  aoc::segmented_range seed;
 
   range_map seed_to_soil;
   range_map soil_to_fertilizer;
@@ -88,10 +125,10 @@ int main(int argc, char **argv) {
     std::istringstream str(line);
     std::string tmp;
     str >> tmp;
-    long long val;
     while (true) {
-      str >> val;
-      seeds.push_back(val);
+      int64_t a;
+      str >> a;
+      seed.add(a, a + 1);
       if (str.eof()) {
         break;
       }
@@ -120,19 +157,23 @@ int main(int argc, char **argv) {
   read_map(in, humidity_to_location);
 
   // map seed to location
-  long long min_loc = 0xFFFFFFFFFFFFll;
 
-  for (auto &seed : seeds) {
-    apply_map(soil, seed);
+  seed.normalize();
+  int64_t min_loc = 0xFFFFFFFFFFFFll;
+  apply_map(soil, seed);
 
-    apply_map(fertilizer, soil);
-    apply_map(water, fertilizer);
-    apply_map(light, water);
-    apply_map(temperature, light);
-    apply_map(humidity, temperature);
-    apply_map(location, humidity);
-    min_loc = std::min(min_loc, location);
+  apply_map(fertilizer, soil);
 
-  }
+  apply_map(water, fertilizer);
+
+  apply_map(light, water);
+
+  apply_map(temperature, light);
+
+  apply_map(humidity, temperature);
+
+  apply_map(location, humidity);
+
+  min_loc = std::min(location.segments[0].first, min_loc);
   std::cout << min_loc << std::endl;
 }
