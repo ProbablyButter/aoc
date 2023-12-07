@@ -24,7 +24,7 @@ re2c:yyfill:check = 1;
 #include <unordered_set>
 #include <vector>
 
-int get_power(std::array<int, 5> hand) {
+int get_power(const std::array<int, 5> &hand) {
   std::unordered_map<int, int> tmp;
   for (auto &v : hand) {
     auto iter = tmp.find(v);
