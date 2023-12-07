@@ -71,4 +71,12 @@ int main(int argc, char **argv) {
     auto tmp = aoc::trim(str);
     std::cout << "\"" << tmp << "\"" << std::endl;
   }
+  std::cout << std::endl;
+  {
+    std::string str = "32T3K 765";
+    auto tmp = aoc::split(str, "", -1);
+    for (auto &v : tmp) {
+      std::cout << "\"" << v << "\"" << std::endl;
+    }
+  }
 }

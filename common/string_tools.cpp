@@ -35,7 +35,7 @@ split(const std::string &txt, const std::string &split_str, int64_t maxsplit) {
       }
     }
     // add remainder
-    if (stop < txt.data() + txt.size()) {
+    if (start != stop) {
       res.emplace_back(start, txt.data() + txt.size() - start);
     }
   } else {
