@@ -21,6 +21,12 @@ std::vector<std::string_view> split(const std::string &txt,
 std::string_view trim(const std::string &txt);
 
 std::string_view trim(const std::string_view &txt);
+
+std::string join(const std::vector<std::string_view> &strs,
+                 const std::string_view &delim);
+
+std::string join(const std::vector<std::string> &strs,
+                 const std::string_view &delim);
 } // namespace aoc
 
 #endif

@@ -2,8 +2,7 @@
 
 #include <cctype>
 #include <cstring>
-
-#include <iostream>
+#include <sstream>
 
 namespace aoc {
 std::vector<std::string_view>
@@ -81,8 +80,32 @@ std::string_view trim(const std::string_view &txt) {
   }
   auto end_rem = std::distance(txt.rbegin(), stop);
   auto start_rem = std::distance(txt.begin(), start);
-  std::cout << end_rem << ", " << start_rem << std::endl;
   std::string_view res(start, txt.size() - start_rem - end_rem);
   return res;
 }
+
+std::string join(const std::vector<std::string_view> &strs,
+                 const std::string_view &delim) {
+  std::stringstream out;
+  for (size_t i = 0; i + 1 < strs.size(); ++i) {
+    out << strs[i] << delim;
+  }
+  if (strs.size()) {
+    out << strs.back();
+  }
+  return out.str();
+}
+
+std::string join(const std::vector<std::string> &strs,
+                 const std::string_view &delim) {
+  std::stringstream out;
+  for (size_t i = 0; i + 1 < strs.size(); ++i) {
+    out << strs[i] << delim;
+  }
+  if (strs.size()) {
+    out << strs.back();
+  }
+  return out.str();
+}
+
 } // namespace aoc

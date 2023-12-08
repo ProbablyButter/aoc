@@ -21,3 +21,6 @@ target_link_libraries(test_segmented_range PUBLIC aoc_common)
 
 add_executable(test_string_tools test_string_tools.cpp)
 target_link_libraries(test_string_tools PUBLIC aoc_common)
+
+add_executable(test_ndarray test_ndarray.cpp)
+target_link_libraries(test_ndarray PUBLIC aoc_common)
