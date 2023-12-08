@@ -35,13 +35,21 @@ template <class T, class V> struct directed_graph {
   std::unordered_map<std::pair<size_t, size_t>, V, ss_pair_hasher>
   floyd_warshall() const;
 
+  /// shortest path from src node to all other reachable nodes
+  void dijkstra(size_t src, std::unordered_map<size_t, V> &dists,
+                std::unordered_map<size_t, size_t> &prev) const;
+
+  /// shortest path from src node to dst node
+  void dijkstra(size_t src, size_t dst, std::unordered_map<size_t, V> &dists,
+                std::unordered_map<size_t, size_t> &prev) const;
+
   void add_node(const T &v) {
     nodes.push_back(v);
     connectivity.emplace_back();
   }
 
-  void add_edge(size_t src, size_t dst, V weight) {
-    connectivity[src][dst] = weight;
+  bool add_edge(size_t src, size_t dst, V weight) {
+    return connectivity[src].emplace(dst, weight).second;
   }
 };
 
