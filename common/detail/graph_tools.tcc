@@ -43,9 +43,11 @@ directed_graph<T, V>::floyd_warshall() const {
 }
 
 template <class T, class V>
-void directed_graph<T, V>::dijkstra(
-    size_t src, std::unordered_map<size_t, V> &dists,
-    std::unordered_map<size_t, size_t> &prev) const {
+template <class F>
+void directed_graph<T, V>::dijkstra(size_t src,
+                                    std::unordered_map<size_t, V> &dists,
+                                    std::unordered_map<size_t, size_t> &prev,
+                                    F &&terminate_functor) const {
   dists.clear();
   prev.clear();
   dists.emplace(src, 0);
@@ -68,93 +70,33 @@ void directed_graph<T, V>::dijkstra(
     }
   };
   std::vector<size_t> queue;
-  std::unordered_set<size_t> in_queue;
+  std::unordered_set<size_t> visited;
   // assume at least one node
   queue.push_back(src);
-  in_queue.emplace(src);
-  while (!queue.empty()) {
-    std::pop_heap(queue.begin(), queue.end(), comparator);
-    size_t u = queue.back();
-    queue.pop_back();
-    in_queue.erase(u);
-    for (auto &neighbor : connectivity[u]) {
-      V alt = dists.at(u) + neighbor.second;
-      auto iter = dists.find(neighbor.first);
-      if (iter == dists.end()) {
-        dists.emplace(neighbor.first, alt);
-        prev[neighbor.first] = u;
-        if (in_queue.find(neighbor.first) != in_queue.end()) {
-          in_queue.emplace(neighbor.first);
-          queue.push_back(neighbor.first);
-          std::push_heap(queue.begin(), queue.end(), comparator);
-        }
-      } else if (alt < iter->second) {
-        iter->second = alt;
-        prev[neighbor.first] = u;
-        if (in_queue.find(neighbor.first) != in_queue.end()) {
-          in_queue.emplace(neighbor.first);
-          queue.push_back(neighbor.first);
-          std::push_heap(queue.begin(), queue.end(), comparator);
-        }
-      }
-    }
-  }
-}
-
-template <class T, class V>
-void directed_graph<T, V>::dijkstra(
-    size_t src, size_t dst, std::unordered_map<size_t, V> &dists,
-    std::unordered_map<size_t, size_t> &prev) const {
-  dists.clear();
-  prev.clear();
-  dists.emplace(src, 0);
-
-  // heap functions are a max heap, reverse comparator
-  auto comparator = [&](size_t a, size_t b) {
-    auto ia = dists.find(a);
-    auto ib = dists.find(b);
-    if (ia == dists.end()) {
-      if (ib == dists.end()) {
-        // both inf dist
-        return a < b;
-      }
-      return true;
-    } else {
-      if (ib == dists.end()) {
-        return false;
-      }
-      return ia->second > ib->second;
-    }
-  };
-  std::vector<size_t> queue;
-  std::unordered_set<size_t> in_queue;
-  // assume at least one node
-  queue.push_back(src);
-  in_queue.emplace(src);
+  visited.emplace(src);
   while (!queue.empty()) {
     size_t u = queue[0];
-    if (u == dst) {
+    if (terminate_functor(u)) {
       return;
     }
     std::pop_heap(queue.begin(), queue.end(), comparator);
     queue.pop_back();
-    in_queue.erase(u);
     for (auto &neighbor : connectivity[u]) {
       V alt = dists.at(u) + neighbor.second;
       auto iter = dists.find(neighbor.first);
       if (iter == dists.end()) {
         dists.emplace(neighbor.first, alt);
         prev[neighbor.first] = u;
-        if (in_queue.find(neighbor.first) != in_queue.end()) {
-          in_queue.emplace(neighbor.first);
+        if (visited.find(neighbor.first) == visited.end()) {
+          visited.emplace(neighbor.first);
           queue.push_back(neighbor.first);
           std::push_heap(queue.begin(), queue.end(), comparator);
         }
       } else if (alt < iter->second) {
         iter->second = alt;
         prev[neighbor.first] = u;
-        if (in_queue.find(neighbor.first) != in_queue.end()) {
-          in_queue.emplace(neighbor.first);
+        if (visited.find(neighbor.first) == visited.end()) {
+          visited.emplace(neighbor.first);
           queue.push_back(neighbor.first);
           std::push_heap(queue.begin(), queue.end(), comparator);
         }

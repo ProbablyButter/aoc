@@ -15,6 +15,7 @@ int main() {
   graph.add_edge(0, 2, 10);
   graph.add_edge(1, 0, 5);
   graph.add_edge(2, 0, 5);
+  graph.add_edge(2, 3, 5);
   auto res = graph.floyd_warshall();
   std::cout << std::endl;
   for (auto &v : res) {
@@ -25,8 +26,11 @@ int main() {
 
   std::unordered_map<size_t, int64_t> dists;
   std::unordered_map<size_t, size_t> prev;
-  graph.dijkstra(0, 3, dists, prev);
+  graph.dijkstra(0, dists, prev);
   for (auto &v : dists) {
     std::cout << "0->" << v.first << ": " << v.second << std::endl;
+  }
+  for (auto &v : prev) {
+    std::cout << v.second << "->" << v.first << std::endl;
   }
 }
