@@ -24,3 +24,7 @@ target_link_libraries(test_string_tools PUBLIC aoc_common)
 
 add_executable(test_ndarray test_ndarray.cpp)
 target_link_libraries(test_ndarray PUBLIC aoc_common)
+
+
+add_executable(test_graph_tools test_graph_tools.cpp)
+target_link_libraries(test_graph_tools PUBLIC aoc_common)
