@@ -8,6 +8,8 @@ int main() {
   graph.add_node("A");
   graph.add_node("B");
   graph.add_node("C");
+  graph.add_node("D");
+  graph.add_node("E");
   graph.add_edge(0, 1, 1);
   graph.add_edge(0, 0, 1);
   graph.add_edge(0, 2, 10);
@@ -23,7 +25,7 @@ int main() {
 
   std::unordered_map<size_t, int64_t> dists;
   std::unordered_map<size_t, size_t> prev;
-  graph.dijkstra(0, dists, prev);
+  graph.dijkstra(0, 3, dists, prev);
   for (auto &v : dists) {
     std::cout << "0->" << v.first << ": " << v.second << std::endl;
   }
