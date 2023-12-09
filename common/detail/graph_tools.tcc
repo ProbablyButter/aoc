@@ -5,9 +5,9 @@
 #include <unordered_set>
 
 namespace aoc {
-template <class T, class V>
+template <class V>
 std::unordered_map<std::pair<size_t, size_t>, V, ss_pair_hasher>
-directed_graph<T, V>::floyd_warshall() const {
+directed_graph<V>::floyd_warshall() const {
   using pair_type = std::pair<size_t, size_t>;
   std::unordered_map<std::pair<size_t, size_t>, V, ss_pair_hasher> res;
   // add initial edges
@@ -17,12 +17,12 @@ directed_graph<T, V>::floyd_warshall() const {
     }
   }
   // dist from every node to itself is 0
-  for (size_t i = 0; i < nodes.size(); ++i) {
+  for (size_t i = 0; i < connectivity.size(); ++i) {
     res[pair_type(i, i)] = 0;
   }
-  for (size_t k = 0; k < nodes.size(); ++k) {
-    for (size_t i = 0; i < nodes.size(); ++i) {
-      for (size_t j = 0; j < nodes.size(); ++j) {
+  for (size_t k = 0; k < connectivity.size(); ++k) {
+    for (size_t i = 0; i < connectivity.size(); ++i) {
+      for (size_t j = 0; j < connectivity.size(); ++j) {
         auto ij_dist = res.find(pair_type(i, j));
         auto ik_dist = res.find(pair_type(i, k));
         auto kj_dist = res.find(pair_type(k, j));
@@ -42,12 +42,12 @@ directed_graph<T, V>::floyd_warshall() const {
   return res;
 }
 
-template <class T, class V>
+template <class V>
 template <class F>
-void directed_graph<T, V>::dijkstra(size_t src,
-                                    std::unordered_map<size_t, V> &dists,
-                                    std::unordered_map<size_t, size_t> &prev,
-                                    F &&terminate_functor) const {
+void directed_graph<V>::dijkstra(size_t src,
+                                 std::unordered_map<size_t, V> &dists,
+                                 std::unordered_map<size_t, size_t> &prev,
+                                 F &&terminate_functor) const {
   dists.clear();
   prev.clear();
   dists.emplace(src, 0);

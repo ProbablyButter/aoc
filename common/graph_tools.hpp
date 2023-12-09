@@ -21,11 +21,8 @@ struct ss_pair_hasher {
   }
 };
 
-/// T: node value type
 /// V: edge weight type
-template <class T, class V> struct directed_graph {
-  // value at nodes
-  std::vector<T> nodes;
+template <class V> struct directed_graph {
   // connectivity from each node
   // connectivity[i][j].first is dst node from node i
   // connectivity[i][j].first is edge weight from node i
@@ -52,12 +49,13 @@ template <class T, class V> struct directed_graph {
     dijkstra(src, dists, prev, [=](size_t n) { return n == dst; });
   }
 
-  void add_node(const T &v) {
-    nodes.push_back(v);
-    connectivity.emplace_back();
-  }
-
   bool add_edge(size_t src, size_t dst, V weight) {
+    while (connectivity.size() <= src) {
+      connectivity.emplace_back();
+    }
+    while (connectivity.size() <= dst) {
+      connectivity.emplace_back();
+    }
     return connectivity[src].emplace(dst, weight).second;
   }
 };

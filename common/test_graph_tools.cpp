@@ -4,12 +4,7 @@
 #include <string>
 
 int main() {
-  aoc::directed_graph<std::string, int64_t> graph;
-  graph.add_node("A");
-  graph.add_node("B");
-  graph.add_node("C");
-  graph.add_node("D");
-  graph.add_node("E");
+  aoc::directed_graph<int64_t> graph;
   graph.add_edge(0, 1, 1);
   graph.add_edge(0, 0, 1);
   graph.add_edge(0, 2, 10);
