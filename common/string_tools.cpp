@@ -108,4 +108,16 @@ std::string join(const std::vector<std::string> &strs,
   return out.str();
 }
 
+double to_double(const std::string_view &str) {
+  double res;
+  std::from_chars(str.data(), str.data() + str.size(), res);
+  return res;
+}
+
+double to_double(const std::string &str) {
+  double res;
+  std::from_chars(str.data(), str.data() + str.size(), res);
+  return res;
+}
+
 } // namespace aoc

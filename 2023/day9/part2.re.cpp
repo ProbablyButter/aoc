@@ -101,9 +101,7 @@ int main(int argc, char **argv) {
     auto vals = aoc::split(line, "");
     board.emplace_back();
     for (auto &v : vals) {
-      int64_t val;
-      std::from_chars(v.data(), v.data() + v.size(), val);
-      board.back().push_back(val);
+      board.back().push_back(aoc::to_int<int64_t>(v));
     }
   }
   int64_t sum = 0;

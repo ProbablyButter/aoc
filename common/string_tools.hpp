@@ -1,6 +1,7 @@
 #ifndef AOC_STRING_TOOL_HPP
 #define AOC_STRING_TOOL_HPP
 
+#include <charconv>
 #include <cstdint>
 #include <string>
 #include <string_view>
@@ -27,6 +28,21 @@ std::string join(const std::vector<std::string_view> &strs,
 
 std::string join(const std::vector<std::string> &strs,
                  const std::string_view &delim);
+
+template <class T> T to_int(const std::string_view &str, int base = 10) {
+  T res;
+  std::from_chars(str.data(), str.data() + str.size(), res, base);
+  return res;
+}
+
+template <class T> T to_int(const std::string &str, int base = 10) {
+  T res;
+  std::from_chars(str.data(), str.data() + str.size(), res, base);
+  return res;
+}
+
+double to_double(const std::string_view &str);
+double to_double(const std::string &str);
 } // namespace aoc
 
 #endif
