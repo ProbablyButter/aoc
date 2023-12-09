@@ -44,7 +44,6 @@ int main(int argc, char **argv) {
   for (auto &row : board) {
     std::vector<std::vector<int64_t>> diffs;
     diffs.emplace_back(row);
-    // diffs.reserve(row.size() - 1);
     while (true) {
       bool all_zero = true;
       diffs.emplace_back();
