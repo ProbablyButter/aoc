@@ -37,41 +37,22 @@ int64_t recurse_count(const std::string_view &line,
       return iter->second;
     }
   }
-  //  TODO: memoize
   std::vector<int64_t> valid_starts;
   int64_t first_broken =
       std::distance(line.begin(), std::find(line.begin(), line.end(), '#'));
-  bool any_more_valid = true;
-  for (size_t i = 0; i < line.size() && any_more_valid; ++i) {
+  for (size_t i = 0; i < line.size(); ++i) {
     bool valid = true;
     for (size_t j = 0; j < damage[didx]; ++j) {
-      if (i + j >= line.size()) {
+      if (i + j >= line.size() || line[i + j] == '.') {
         valid = false;
-        any_more_valid = false;
-        goto escape_loop;
-      }
-      switch (line[i + j]) {
-      case '#':
-      case '?':
         break;
-      default:
-        valid = false;
-        goto escape_loop;
       }
     }
-  escape_loop:
     if (valid) {
       if (damage[didx] + i != line.size()) {
         // this start position needs at least one . after
-        switch (line[damage[didx] + i]) {
-        case '.':
-        case '?':
-          // still possible
-          break;
-        default:
+        if (line[damage[didx] + i] == '#') {
           valid = false;
-          // any_more_valid = false;
-          break;
         }
       }
       if (valid) {
@@ -92,29 +73,20 @@ int64_t recurse_count(const std::string_view &line,
     for (auto i : valid_starts) {
       bool valid = true;
       for (size_t j = i + damage[didx]; j < line.size() && valid; ++j) {
-        switch (line[j]) {
-        case '.':
-        case '?':
-          break;
-        default:
+        if (line[j] == '#') {
           valid = false;
-          break;
         }
       }
-      if (valid) {
-        ++total;
-      }
+      total += valid;
     }
   } else {
     for (auto i : valid_starts) {
-      if ((i + damage[didx] + 1) >= line.size()) {
+      auto start = i + damage[didx] + 1;
+      if (start >= line.size()) {
         break;
       }
-      auto start = i + damage[didx] + 1;
-      total +=
-          recurse_count(std::string_view(line.data() + start,
-                                         line.size() - (i + damage[didx] + 1)),
-                        damage, didx + 1, pos + start, cache);
+      total += recurse_count(line.substr(start), damage, didx + 1, pos + start,
+                             cache);
     }
   }
   cache.emplace(key, total);
