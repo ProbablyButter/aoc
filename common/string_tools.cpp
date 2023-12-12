@@ -6,7 +6,7 @@
 
 namespace aoc {
 std::vector<std::string_view>
-split(const std::string &txt, const std::string &split_str, int64_t maxsplit) {
+split(const std::string_view &txt, const std::string &split_str, int64_t maxsplit) {
   std::vector<std::string_view> res;
   if (maxsplit == 0) {
     res.emplace_back(txt);

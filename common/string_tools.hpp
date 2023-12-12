@@ -16,7 +16,7 @@ namespace aoc {
 /// @param maxsplit max number of splits of result, or -1 for no limit.
 /// maxsplit=0 means result is full txt.
 ///
-std::vector<std::string_view> split(const std::string &txt,
+std::vector<std::string_view> split(const std::string_view &txt,
                                     const std::string &split_str,
                                     int64_t maxsplit = -1);
 
