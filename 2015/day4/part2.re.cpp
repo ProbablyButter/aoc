@@ -9,6 +9,7 @@ re2c:yyfill:check = 1;
 
 #include "aoc.hpp"
 #include "graph_tools.hpp"
+#include "hash.hpp"
 #include "string_tools.hpp"
 
 #include <algorithm>
@@ -26,32 +27,29 @@ re2c:yyfill:check = 1;
 #include <vector>
 
 int main(int argc, char **argv) {
-  std::filesystem::path in_path = get_resource_path("input.txt");
-  std::ifstream in(in_path);
-  std::string line;
-  std::getline(in, line);
-  int64_t row[2] = {0, 0};
-  int64_t col[2] = {0, 0};
-  std::set<std::pair<int64_t, int64_t>> visited;
-  visited.emplace(row[0], col[0]);
-  for (size_t i = 0; i < line.size(); ++i) {
-    auto c = line[i];
-    auto pos = i % 2;
-    switch (c) {
-    case '>':
-      ++col[pos];
-      break;
-    case '^':
-      --row[pos];
-      break;
-    case '<':
-      --col[pos];
-      break;
-    case 'v':
-      ++row[pos];
+  std::string input = "iwrupvqb";
+  int64_t num = 0;
+
+  while (true) {
+    std::stringstream str;
+    str << input << num;
+    aoc::md5 hash;
+    hash.init();
+    std::string tmp = str.str();
+    hash.append(reinterpret_cast<const uint8_t *>(tmp.data()), tmp.size());
+    hash.finalize();
+    std::string digest = hash.str();
+    bool valid = true;
+    for (int i = 0; i < 6; ++i) {
+      if (digest[i] != '0') {
+        valid = false;
+        break;
+      }
+    }
+    if (valid) {
       break;
     }
-    visited.emplace(row[pos], col[pos]);
+    ++num;
   }
-  std::cout << visited.size() << std::endl;
+  std::cout << num << std::endl;
 }
