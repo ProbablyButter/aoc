@@ -14,11 +14,13 @@ namespace aoc {
 /// @param split_str empty string to split on all whitespace (ignoring all empty
 /// string)
 /// @param maxsplit max number of splits of result, or -1 for no limit.
+/// @param keep_empty only used when split_str is not empty. False to discard all empty splits
 /// maxsplit=0 means result is full txt.
 ///
 std::vector<std::string_view> split(const std::string_view &txt,
-                                    const std::string &split_str,
-                                    int64_t maxsplit = -1);
+                                    const std::string &split_str = "",
+                                    int64_t maxsplit = -1,
+                                    bool keep_empty = true);
 
 std::string_view trim(const std::string &txt);
 

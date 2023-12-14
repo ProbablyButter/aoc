@@ -5,8 +5,9 @@
 #include <sstream>
 
 namespace aoc {
-std::vector<std::string_view>
-split(const std::string_view &txt, const std::string &split_str, int64_t maxsplit) {
+std::vector<std::string_view> split(const std::string_view &txt,
+                                    const std::string &split_str,
+                                    int64_t maxsplit, bool keep_empty) {
   std::vector<std::string_view> res;
   if (maxsplit == 0) {
     res.emplace_back(txt);
@@ -45,7 +46,9 @@ split(const std::string_view &txt, const std::string &split_str, int64_t maxspli
         if (maxsplit > 0 && res.size() >= maxsplit) {
           break;
         }
-        res.emplace_back(start, stop - start);
+        if (keep_empty || stop != start) {
+          res.emplace_back(start, stop - start);
+        }
         stop += split_str.size();
         start = stop;
       } else {
@@ -53,7 +56,9 @@ split(const std::string_view &txt, const std::string &split_str, int64_t maxspli
       }
     }
     // add remainder
-    res.emplace_back(start, txt.data() + txt.size() - start);
+    if (txt.data() + txt.size() - start) {
+      res.emplace_back(start, txt.data() + txt.size() - start);
+    }
   }
 
   return res;
@@ -109,7 +114,7 @@ std::string join(const std::vector<std::string> &strs,
 }
 
 double to_double(const char *str) {
-  char* tmp;
+  char *tmp;
   return std::strtod(str, &tmp);
 }
 
