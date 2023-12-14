@@ -55,6 +55,13 @@ include("aoc-modules")
 
 add_subdirectory(common)
 
+add_subdirectory(2015)
+add_subdirectory(2016)
+add_subdirectory(2017)
+add_subdirectory(2018)
+add_subdirectory(2019)
 add_subdirectory(2020)
+add_subdirectory(2021)
+add_subdirectory(2022)
 add_subdirectory(2023)
 
