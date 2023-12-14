@@ -28,3 +28,6 @@ target_link_libraries(test_ndarray PUBLIC aoc_common)
 
 add_executable(test_graph_tools test_graph_tools.cpp)
 target_link_libraries(test_graph_tools PUBLIC aoc_common)
+
+add_executable(test_hash test_hash.cpp)
+target_link_libraries(test_hash PUBLIC aoc_common)

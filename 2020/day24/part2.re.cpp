@@ -23,23 +23,19 @@ re2c:yyfill:check = 1;
 #include <unordered_set>
 #include <vector>
 
-namespace std
-{
-  template <> struct hash<std::pair<int, int>>
-  {
-
-    uint64_t operator()(const std::pair<int, int> &v) const
-    {
-      aoc::hasher hash_;
-      hash_.finalize(
-        (static_cast<uint64_t>(v.first) << 32) | static_cast<uint64_t>(v.second), 8);
-      return hash_.h1;
-    }
-  };
+namespace std {
+template <> struct hash<std::pair<int, int>> {
+  uint64_t operator()(const std::pair<int, int> &v) const {
+    aoc::hasher hash_;
+    hash_.append(reinterpret_cast<const uint8_t *>(&v.first), sizeof(int));
+    hash_.append(reinterpret_cast<const uint8_t *>(&v.second), sizeof(int));
+    hash_.finalize();
+    return hash_.data[0];
+  }
+};
 } // namespace std
 
-void find_tile_loc(const char *YYCURSOR, int &x, int &y)
-{
+void find_tile_loc(const char *YYCURSOR, int &x, int &y) {
   const char *YYMARKER;
   /*!stags:re2c format = 'const char *@@;'; */
 parse_start:
@@ -83,12 +79,10 @@ goto parse_start;
 
 void update(const std::unordered_set<std::pair<int, int>> &orig,
             std::unordered_set<std::pair<int, int>> &res,
-            std::unordered_set<std::pair<int, int>> &work_buf)
-{
+            std::unordered_set<std::pair<int, int>> &work_buf) {
   res.clear();
   work_buf.clear();
-  for (auto &v : orig)
-  {
+  for (auto &v : orig) {
     // add v and all its neighbors
     work_buf.insert(v);
     std::pair<int, int> loc;
@@ -118,8 +112,7 @@ void update(const std::unordered_set<std::pair<int, int>> &orig,
     work_buf.insert(loc);
   }
   // now perform update
-  for (auto &v : work_buf)
-  {
+  for (auto &v : work_buf) {
     int flipped_neighbors = 0;
     std::pair<int, int> loc;
     // w
@@ -146,31 +139,23 @@ void update(const std::unordered_set<std::pair<int, int>> &orig,
     loc.first = v.first + 1;
     loc.second = v.second - 1;
     flipped_neighbors += orig.find(loc) != orig.end();
-    if (orig.find(v) == orig.end())
-    {
+    if (orig.find(v) == orig.end()) {
       // originally white
-      if (flipped_neighbors == 2)
-      {
+      if (flipped_neighbors == 2) {
         res.insert(v);
       }
-    }
-    else
-    {
+    } else {
       // originally black
-      if (flipped_neighbors == 0 || flipped_neighbors > 2)
-      {
+      if (flipped_neighbors == 0 || flipped_neighbors > 2) {
         // becomes white
-      }
-      else
-      {
+      } else {
         res.insert(v);
       }
     }
   }
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
   std::filesystem::path in_path = get_resource_path("input.txt");
 
   std::ifstream in(in_path);
@@ -180,34 +165,27 @@ int main(int argc, char **argv)
 
   // parse input
   {
-    while (true)
-    {
+    while (true) {
       std::getline(in, line);
-      if (in.eof())
-      {
+      if (in.eof()) {
         break;
       }
-      if (line.empty())
-      {
+      if (line.empty()) {
         break;
       }
       std::pair<int, int> loc = {0, 0};
       find_tile_loc(line.data(), loc.first, loc.second);
       auto iter = flipped.find(loc);
-      if (iter == flipped.end())
-      {
+      if (iter == flipped.end()) {
         flipped.emplace(loc);
-      }
-      else
-      {
+      } else {
         flipped.erase(iter);
       }
     }
   }
   // run updater
   std::unordered_set<std::pair<int, int>> work_buf;
-  for (size_t i = 0; i < 100; ++i)
-  {
+  for (size_t i = 0; i < 100; ++i) {
     std::unordered_set<std::pair<int, int>> res;
     update(flipped, res, work_buf);
     flipped = std::move(res);

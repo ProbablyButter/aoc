@@ -14,10 +14,11 @@ struct ss_pair_hasher {
   size_t operator()(const std::pair<size_t, size_t> &v) const noexcept {
     hasher hash;
     hash.init(123456789ull);
-    hash.add_block(v.first, v.second);
+    hash.append(reinterpret_cast<const uint8_t *>(&v.first), sizeof(size_t));
+    hash.append(reinterpret_cast<const uint8_t *>(&v.second), sizeof(size_t));
     hash.finalize();
     // only return the low bits?
-    return hash.h2;
+    return hash.data[1];
   }
 };
 

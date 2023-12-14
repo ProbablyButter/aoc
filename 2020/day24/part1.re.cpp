@@ -23,23 +23,20 @@ re2c:yyfill:check = 1;
 #include <unordered_set>
 #include <vector>
 
-namespace std
-{
-  template <> struct hash<std::pair<int, int>>
-  {
+namespace std {
+template <> struct hash<std::pair<int, int>> {
 
-    uint64_t operator()(const std::pair<int, int> &v) const
-    {
-      aoc::hasher hash_;
-      hash_.finalize(
-        (static_cast<uint64_t>(v.first) << 32) | static_cast<uint64_t>(v.second), 8);
-      return hash_.h1;
-    }
-  };
+  uint64_t operator()(const std::pair<int, int> &v) const {
+    aoc::hasher hash_;
+    hash_.append(reinterpret_cast<const uint8_t *>(&v.first), sizeof(int));
+    hash_.append(reinterpret_cast<const uint8_t *>(&v.second), sizeof(int));
+    hash_.finalize();
+    return hash_.data[0];
+  }
+};
 } // namespace std
 
-void find_tile_loc(const char *YYCURSOR, int &x, int &y)
-{
+void find_tile_loc(const char *YYCURSOR, int &x, int &y) {
   const char *YYMARKER;
   /*!stags:re2c format = 'const char *@@;'; */
 parse_start:
@@ -81,8 +78,7 @@ goto parse_start;
   */
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
   std::filesystem::path in_path = get_resource_path("input.txt");
 
   std::ifstream in(in_path);
@@ -92,26 +88,20 @@ int main(int argc, char **argv)
 
   // parse input
   {
-    while (true)
-    {
+    while (true) {
       std::getline(in, line);
-      if (in.eof())
-      {
+      if (in.eof()) {
         break;
       }
-      if (line.empty())
-      {
+      if (line.empty()) {
         break;
       }
       std::pair<int, int> loc = {0, 0};
       find_tile_loc(line.data(), loc.first, loc.second);
       auto iter = flipped.find(loc);
-      if (iter == flipped.end())
-      {
+      if (iter == flipped.end()) {
         flipped.emplace(loc);
-      }
-      else
-      {
+      } else {
         flipped.erase(iter);
       }
     }
