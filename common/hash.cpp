@@ -67,7 +67,7 @@ void hasher::append(const uint8_t *vs, uint64_t bytes) {
   while (true) {
     if (bytes + rem >= 16) {
       std::copy(vs, vs + 16 - rem, tmp + rem);
-      add_block(data[0], data[1]);
+      add_block(buf_[0], buf_[1]);
       vs += (16 - rem);
       bytes -= (16 - rem);
       rem = 0;
