@@ -6,10 +6,10 @@
 
 namespace aoc {
 template <class V>
-std::unordered_map<std::pair<size_t, size_t>, V, ss_pair_hasher>
+std::unordered_map<std::pair<size_t, size_t>, V, pair_hasher>
 directed_graph<V>::floyd_warshall() const {
   using pair_type = std::pair<size_t, size_t>;
-  std::unordered_map<std::pair<size_t, size_t>, V, ss_pair_hasher> res;
+  std::unordered_map<std::pair<size_t, size_t>, V, pair_hasher> res;
   // add initial edges
   for (size_t i = 0; i < connectivity.size(); ++i) {
     for (auto &edge : connectivity[i]) {

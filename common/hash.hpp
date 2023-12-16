@@ -1,8 +1,10 @@
 #ifndef AOC_HASH_HPP
 #define AOC_HASH_HPP
 
+#include <array>
 #include <cstdint>
 #include <string>
+#include <utility>
 
 namespace aoc {
 ///
@@ -50,6 +52,31 @@ struct md5 {
 
 private:
   void transform();
+};
+
+struct pair_hasher {
+  template <class T, class V>
+  size_t operator()(const std::pair<T, V> &v) const noexcept {
+    hasher hash;
+    hash.init(123456789ull);
+    hash.append(reinterpret_cast<const uint8_t *>(&v.first), sizeof(T));
+    hash.append(reinterpret_cast<const uint8_t *>(&v.second), sizeof(V));
+    hash.finalize();
+    return hash.data[1];
+  };
+};
+
+struct array_hasher {
+  template <class T, size_t N>
+  size_t operator()(const std::array<T, N> &v) const noexcept {
+    hasher hash;
+    hash.init(123456789ull);
+    for (size_t i = 0; i < N; ++i) {
+      hash.append(reinterpret_cast<const uint8_t *>(&v[i]), sizeof(T));
+    }
+    hash.finalize();
+    return hash.data[1];
+  };
 };
 } // namespace aoc
 

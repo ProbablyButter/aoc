@@ -9,19 +9,6 @@
 #include <vector>
 
 namespace aoc {
-
-struct ss_pair_hasher {
-  size_t operator()(const std::pair<size_t, size_t> &v) const noexcept {
-    hasher hash;
-    hash.init(123456789ull);
-    hash.append(reinterpret_cast<const uint8_t *>(&v.first), sizeof(size_t));
-    hash.append(reinterpret_cast<const uint8_t *>(&v.second), sizeof(size_t));
-    hash.finalize();
-    // only return the low bits?
-    return hash.data[1];
-  }
-};
-
 /// V: edge weight type
 template <class V> struct directed_graph {
   // connectivity from each node
@@ -30,7 +17,7 @@ template <class V> struct directed_graph {
   std::vector<std::unordered_map<size_t, V>> connectivity;
 
   /// computes the shortest path (if any) from all nodes to all other nodes
-  std::unordered_map<std::pair<size_t, size_t>, V, ss_pair_hasher>
+  std::unordered_map<std::pair<size_t, size_t>, V, pair_hasher>
   floyd_warshall() const;
 
   template <class F>

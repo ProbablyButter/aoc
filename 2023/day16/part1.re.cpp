@@ -25,24 +25,11 @@ re2c:yyfill:check = 1;
 #include <unordered_set>
 #include <vector>
 
-struct beam_hasher {
-  size_t operator()(const std::array<int64_t, 4> &v) const noexcept {
-    aoc::hasher hash;
-    hash.init(123456789ull);
-    for (auto &val : v) {
-      hash.append(reinterpret_cast<const uint8_t *>(&val), sizeof(int64_t));
-    }
-    hash.finalize();
-    // only return the low bits?
-    return hash.data[1];
-  }
-};
-
 int64_t count_energized(const std::vector<std::string> &board, int64_t erow,
                         int64_t ecol, int64_t ex, int64_t ey) {
   std::vector<std::array<int64_t, 4>> beams;
-  std::unordered_set<std::pair<size_t, size_t>, aoc::ss_pair_hasher> energized;
-  std::unordered_set<std::array<int64_t, 4>, beam_hasher> history;
+  std::unordered_set<std::pair<size_t, size_t>, aoc::pair_hasher> energized;
+  std::unordered_set<std::array<int64_t, 4>, aoc::array_hasher> history;
   energized.emplace(erow, ecol);
   // row, col, vel_x, vel_y
   beams.emplace_back(std::array<int64_t, 4>{erow, ecol, ex, ey});

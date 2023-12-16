@@ -29,7 +29,7 @@ int64_t recurse_count(const std::string_view &line,
                       const std::vector<int64_t> &damage, size_t didx,
                       size_t pos,
                       std::unordered_map<std::pair<size_t, size_t>, int64_t,
-                                         aoc::ss_pair_hasher> &cache) {
+                                         aoc::pair_hasher> &cache) {
   std::pair<size_t, size_t> key(didx, pos);
   {
     auto iter = cache.find(key);
@@ -115,7 +115,7 @@ void compute_expand(std::vector<std::string> maps,
   }
 
   for (size_t i = 0; i < maps.size(); ++i) {
-    std::unordered_map<std::pair<size_t, size_t>, int64_t, aoc::ss_pair_hasher>
+    std::unordered_map<std::pair<size_t, size_t>, int64_t, aoc::pair_hasher>
         cache;
     auto count = recurse_count(maps[i], damage[i], 0, 0, cache);
     std::cout << "count: " << count << std::endl;
