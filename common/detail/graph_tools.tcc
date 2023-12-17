@@ -104,6 +104,71 @@ void directed_graph<V>::dijkstra(size_t src,
     }
   }
 }
+
+template <class NodeType, class DistMetric, class NodeHash, class Term,
+          class Gen, class NodeCmp>
+void gen_dijkstra(const NodeType &src, Term &&terminate_functor,
+                  Gen &&gen_neighbors,
+                  std::unordered_map<NodeType, DistMetric, NodeHash> &dists,
+                  std::unordered_map<NodeType, NodeType, NodeHash> &prev,
+                  NodeCmp &&node_cmp) {
+  dists.clear();
+  prev.clear();
+  dists.emplace(src, 0);
+  // heap functions are a max heap, reverse comparator
+  auto comparator = [&](const NodeType &a, const NodeType &b) {
+    auto ia = dists.find(a);
+    auto ib = dists.find(b);
+    if (ia == dists.end()) {
+      if (ib == dists.end()) {
+        // both inf dist
+        return node_cmp(a, b);
+      }
+      return true;
+    } else {
+      if (ib == dists.end()) {
+        return false;
+      }
+      return ia->second > ib->second;
+    }
+  };
+  std::vector<NodeType> queue;
+  std::unordered_set<NodeType, NodeHash> visited;
+  // assume at least one node
+  queue.push_back(src);
+  visited.emplace(src);
+  while (!queue.empty()) {
+    auto u = queue[0];
+    if (terminate_functor(u)) {
+      return;
+    }
+    std::pop_heap(queue.begin(), queue.end(), comparator);
+    queue.pop_back();
+    // pair of neighbor and weight
+    auto neighbors = gen_neighbors(u);
+    for (auto &neighbor : neighbors) {
+      DistMetric alt = dists.at(u) + neighbor.second;
+      auto iter = dists.find(neighbor.first);
+      if (iter == dists.end()) {
+        dists.emplace(neighbor.first, alt);
+        prev[neighbor.first] = u;
+        if (visited.find(neighbor.first) == visited.end()) {
+          visited.emplace(neighbor.first);
+          queue.push_back(neighbor.first);
+          std::push_heap(queue.begin(), queue.end(), comparator);
+        }
+      } else if (alt < iter->second) {
+        iter->second = alt;
+        prev[neighbor.first] = u;
+        if (visited.find(neighbor.first) == visited.end()) {
+          visited.emplace(neighbor.first);
+          queue.push_back(neighbor.first);
+          std::push_heap(queue.begin(), queue.end(), comparator);
+        }
+      }
+    }
+  }
+}
 } // namespace aoc
 
 #endif

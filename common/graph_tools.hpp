@@ -48,6 +48,14 @@ template <class V> struct directed_graph {
   }
 };
 
+template <class NodeType, class DistMetric, class NodeHash, class Term,
+          class Gen, class NodeCmp = std::less<NodeType>>
+void gen_dijkstra(const NodeType &src, Term &&terminate_functor,
+                  Gen &&gen_neighbors,
+                  std::unordered_map<NodeType, DistMetric, NodeHash> &dists,
+                  std::unordered_map<NodeType, NodeType, NodeHash> &prev,
+                  NodeCmp &&node_cmp);
+
 } // namespace aoc
 
 #include "detail/graph_tools.tcc"
