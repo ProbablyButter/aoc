@@ -14,6 +14,7 @@ struct segmented_range {
   /// when normalized, guarantees:
   /// no overlapping segments
   /// segments sorted by start, then stop
+  /// segments are [inclusive, exclusive)
   std::vector<std::pair<int64_t, int64_t>> segments;
 
   /// note: output is not normalized

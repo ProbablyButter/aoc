@@ -20,12 +20,13 @@ segmented_range::subtract(const std::pair<int64_t, int64_t> &segment) const {
   }
   size_t i = 0;
   int64_t curr = segments[0].first;
+  bool done = false;
   while (true) {
     if (i >= segments.size()) {
       // nothing left to compare
       break;
     }
-    if (curr >= segment.second) {
+    if (done) {
       // nothing left to compare, add everything else
       if (curr < segments[i].second) {
         res.segments.emplace_back(curr, segments[i].second);
@@ -38,6 +39,10 @@ segmented_range::subtract(const std::pair<int64_t, int64_t> &segment) const {
     }
     if (curr >= segments[i].second) {
       ++i;
+      continue;
+    }
+    if (curr >= segment.second) {
+      done = true;
       continue;
     }
     if (curr < segments[i].first) {
