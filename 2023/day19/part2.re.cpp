@@ -40,12 +40,9 @@ struct instr {
     case NONE:
       if (next == "R") {
         // reject all
-        std::cout << "reject all" << std::endl;
       } else if (next == "A") {
-        std::cout << "accept all" << std::endl;
         accept.emplace_back(p);
       } else {
-        std::cout << "process all with " << next << std::endl;
         to_process.emplace_back(next, p);
       }
       break;
@@ -74,12 +71,9 @@ struct instr {
       res.lower[idx] = std::max<int64_t>(res.lower[idx], value);
       if (p.volume()) {
         if (next == "R") {
-          std::cout << "rejecting: " << std::endl;
         } else if (next == "A") {
-          std::cout << "accepting: " << std::endl;
           accept.emplace_back(p);
         } else {
-          std::cout << "process with " << next << ": " << std::endl;
           to_process.emplace_back(next, p);
         }
       }
@@ -109,12 +103,9 @@ struct instr {
       res.upper[idx] = std::min<int64_t>(res.upper[idx], value + 1);
       if (p.volume()) {
         if (next == "R") {
-          std::cout << "rejecting: " << std::endl;
         } else if (next == "A") {
-          std::cout << "accepting: " << std::endl;
           accept.emplace_back(p);
         } else {
-          std::cout << "process with " << next << ": " << std::endl;
           to_process.emplace_back(next, p);
         }
       }
@@ -240,7 +231,6 @@ int main(int argc, char **argv) {
   while (to_process.size()) {
     auto value = to_process.back();
     to_process.pop_back();
-    std::cout << "workflow " << value.first << std::endl;
     auto &wf = workflows.at(value.first);
 
     for (auto &wf_instr : wf) {
