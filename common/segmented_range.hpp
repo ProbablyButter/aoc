@@ -44,7 +44,10 @@ struct segmented_range {
   void normalize();
 
   /// must normalie *this before calling this function
+  /// output is normalized
   void merge_adjacent();
+
+  int64_t size() const;
 };
 } // namespace aoc
 

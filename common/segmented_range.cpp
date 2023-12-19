@@ -377,4 +377,12 @@ void segmented_range::merge_adjacent() {
   }
   segments.erase(segments.begin() + len, segments.end());
 }
+
+int64_t segmented_range::size() const {
+  int64_t res = 0;
+  for (auto &v : segments) {
+    res += v.second - v.first;
+  }
+  return res;
+}
 } // namespace aoc
