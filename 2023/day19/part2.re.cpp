@@ -66,9 +66,11 @@ struct instr {
         throw std::runtime_error("unknown attr");
       }
       // keep in p everything which satisfies condition
-      p.upper[idx] = std::min<int64_t>(p.upper[idx], value);
+      p.upper[idx] = std::max<int64_t>(std::min<int64_t>(p.upper[idx], value),
+                                       p.lower[idx]);
       // remove from res everything which satisfies the condition
-      res.lower[idx] = std::max<int64_t>(res.lower[idx], value);
+      res.lower[idx] = std::min<int64_t>(
+          std::max<int64_t>(res.lower[idx], value), res.upper[idx]);
       if (p.volume()) {
         if (next == "R") {
         } else if (next == "A") {
@@ -98,9 +100,11 @@ struct instr {
         throw std::runtime_error("unknown attr");
       }
       // keep in p everything which satisfies condition
-      p.lower[idx] = std::max<int64_t>(p.lower[idx], value + 1);
+      p.lower[idx] = std::min<int64_t>(
+          std::max<int64_t>(p.lower[idx], value + 1), p.upper[idx]);
       // remove from res everything which satisfies the condition
-      res.upper[idx] = std::min<int64_t>(res.upper[idx], value + 1);
+      res.upper[idx] = std::max<int64_t>(
+          std::min<int64_t>(res.upper[idx], value + 1), res.lower[idx]);
       if (p.volume()) {
         if (next == "R") {
         } else if (next == "A") {
