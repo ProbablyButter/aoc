@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <map>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace aoc {
@@ -15,6 +16,10 @@ template <class V> struct directed_graph {
   // connectivity[i][j].first is dst node from node i
   // connectivity[i][j].first is edge weight from node i
   std::vector<std::unordered_map<size_t, V>> connectivity;
+
+  /// identifies all strongly connected components
+  /// @return index of component the given node belongs to
+  std::vector<size_t> strongly_connected_components(size_t& count) const;
 
   /// computes the shortest path (if any) from all nodes to all other nodes
   std::unordered_map<std::pair<size_t, size_t>, V, pair_hasher>
@@ -32,7 +37,8 @@ template <class V> struct directed_graph {
   }
 
   /// shortest path from src node to dst node
-  void dijkstra(size_t src, size_t dst, std::unordered_map<size_t, V> &dists,
+  void dijkstra(size_t src, size_t dst, size_t &count,
+                std::unordered_map<size_t, V> &dists,
                 std::unordered_map<size_t, size_t> &prev) const {
     dijkstra(src, dists, prev, [=](size_t n) { return n == dst; });
   }
@@ -46,6 +52,13 @@ template <class V> struct directed_graph {
     }
     return connectivity[src].emplace(dst, weight).second;
   }
+
+private:
+  void strong_connect(size_t node, size_t &idx, size_t &count,
+                      std::vector<size_t> &stack, std::vector<int64_t> &idcs,
+                      std::vector<int64_t> &low_links,
+                      std::unordered_set<size_t> &on_stack,
+                      std::vector<size_t> &res) const;
 };
 
 template <class NodeType, class DistMetric, class NodeHash, class Term,

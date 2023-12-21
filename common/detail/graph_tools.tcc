@@ -43,6 +43,64 @@ directed_graph<V>::floyd_warshall() const {
 }
 
 template <class V>
+std::vector<size_t>
+directed_graph<V>::strongly_connected_components(size_t &count) const {
+  count = 0;
+  // use Tarjan's algorithm
+  std::vector<size_t> stack;
+  std::vector<size_t> res;
+  size_t idx = 0;
+  res.resize(connectivity.size(), 0xffffffffu);
+  std::vector<int64_t> idcs(connectivity.size(), -1);
+  std::vector<int64_t> low_links(connectivity.size(), -1);
+  std::unordered_set<size_t> on_stack;
+  for (size_t i = 0; i < connectivity.size(); ++i) {
+    if (idcs[i] == -1) {
+      strong_connect(i, idx, count, stack, idcs, low_links, on_stack, res);
+    }
+  }
+
+  return res;
+}
+
+template <class V>
+void directed_graph<V>::strong_connect(size_t node, size_t &idx, size_t &count,
+                                       std::vector<size_t> &stack,
+                                       std::vector<int64_t> &idcs,
+                                       std::vector<int64_t> &low_links,
+                                       std::unordered_set<size_t> &on_stack,
+                                       std::vector<size_t> &res) const {
+  idcs[node] = idx;
+  low_links[node] = idx;
+  ++idx;
+  stack.push_back(node);
+  on_stack.emplace(node);
+  for (auto &w : connectivity.at(node)) {
+    if (idcs[w.first] == -1) {
+      // w not visited yet
+      strong_connect(w.first, idx, count, stack, idcs, low_links, on_stack,
+                     res);
+      low_links[node] = std::min(low_links[node], low_links[w.first]);
+    } else if (on_stack.find(w.first) != on_stack.end()) {
+      low_links[node] = std::min(low_links[node], idcs[w.first]);
+    }
+  }
+  if (low_links[node] == idcs[node]) {
+    // start a new strongly component
+    while (true) {
+      auto w = stack.back();
+      stack.pop_back();
+      on_stack.erase(w);
+      res[w] = count;
+      if (w == node) {
+        break;
+      }
+    }
+    ++count;
+  }
+}
+
+template <class V>
 template <class F>
 void directed_graph<V>::dijkstra(size_t src,
                                  std::unordered_map<size_t, V> &dists,
