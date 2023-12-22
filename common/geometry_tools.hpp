@@ -29,6 +29,7 @@ template <class T, size_t Dims> struct hslab {
   }
 };
 
+// 2D
 bool line_segment_intersection(double x0, double y0, double x1, double y1,
                                double x2, double y2, double x3, double y3,
                                double &s, double &t);
