@@ -87,6 +87,11 @@ int main(int argc, char **argv) {
 
   freefall(bricks);
 
+  std::sort(bricks.begin(), bricks.end(), [](auto &a, auto &b) {
+    return std::lexicographical_compare(a.lower.rbegin(), a.lower.rend(),
+                                        b.lower.rbegin(), b.lower.rend());
+  });
+
   // figure out which bricks support which other ones
   std::vector<std::vector<size_t>> supported;
   supported.resize(bricks.size());

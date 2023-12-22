@@ -87,6 +87,12 @@ int main(int argc, char **argv) {
 
   // initial fall
   freefall(bricks);
+  
+  std::sort(bricks.begin(), bricks.end(), [](auto &a, auto &b) {
+    return std::lexicographical_compare(a.lower.rbegin(), a.lower.rend(),
+                                        b.lower.rbegin(), b.lower.rend());
+  });
+  
   int64_t count = 0;
   for (size_t i = 0; i < bricks.size(); ++i) {
     auto copy = bricks;
