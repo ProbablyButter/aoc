@@ -126,7 +126,7 @@ int main(int argc, char **argv) {
   auto ssc = graph.strongly_connected_components(num_ssc);
   // now build a new graph for the SSC relation?
 #endif
-  
+
   std::unordered_map<std::string, bool> flipflop_states;
   std::unordered_map<std::string, std::unordered_map<std::string, bool>>
       conjunction_states;
@@ -146,6 +146,7 @@ int main(int argc, char **argv) {
       break;
     }
   }
+  std::unordered_set<std::string> key_nodes = {"qq", "fj", "vm", "jc"};
 
   std::vector<std::tuple<std::string, bool, std::string>> to_process;
   size_t button_count = 0;
@@ -221,27 +222,16 @@ int main(int argc, char **argv) {
       } break;
       }
     }
-    for (auto &v : conjunction_states["qq"]) {
-      std::cout << v.second;
-    }
-    std::cout << std::endl;
-    int low_count = 0;
     for (auto &v : to_process) {
-      if (std::get<0>(v) == "rx") {
-        // std::cout << "rx " << std::get<1>(v) << std::endl;
-        if (std::get<1>(v) == false) {
-          ++low_count;
+      if (!std::get<1>(v)) {
+        if (key_nodes.find(std::get<2>(v)) != key_nodes.end()) {
+          std::cout << std::get<2>(v) << ": " << button_count << std::endl;
+          key_nodes.erase(std::get<2>(v));
         }
       }
     }
-    if (low_count == 1) {
-      goto done;
-    } else if (low_count > 1) {
-      std::cout << "rx " << low_count << ": " << button_count << std::endl;
+    if (key_nodes.empty()) {
+      break;
     }
   }
-  std::cout << "no rx" << std::endl;
-  return 0;
-done:
-  std::cout << button_count << std::endl;
 }
