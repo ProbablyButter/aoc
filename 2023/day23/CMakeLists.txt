@@ -18,3 +18,5 @@ add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/part2.cpp"
 )
 
 AOC_EXECUTABLE(part2 "${CMAKE_CURRENT_BINARY_DIR}/part2.cpp")
+
+AOC_EXECUTABLE(draw_graph draw_graph.cpp)

@@ -362,26 +362,9 @@ void build_graph(
   }
 }
 
-void search(std::vector<size_t> &path, int64_t curr_dist,
-            const aoc::directed_graph<int64_t> &graph,
-            std::unordered_set<size_t> &visited,
-            std::unordered_map<size_t, int64_t> &max_dists) {
-  auto &neighbors = graph.connectivity[path.back()];
-
-  max_dists[path.back()] = std::max<int64_t>(max_dists[path.back()], curr_dist);
-  for (auto &n : neighbors) {
-    if (visited.find(n.first) == visited.end()) {
-      // recurse
-      path.emplace_back(n.first);
-      visited.emplace(n.first);
-      search(path, curr_dist + n.second, graph, visited, max_dists);
-      path.pop_back();
-      visited.erase(n.first);
-    }
-  }
-}
-
 int main(int argc, char **argv) {
+
+  bool ignore_slopes = true;
   std::filesystem::path in_path = get_resource_path("input.txt");
   std::ifstream in(in_path);
   std::string line;
@@ -415,20 +398,24 @@ int main(int argc, char **argv) {
   aoc::directed_graph<int64_t> graph;
   {
     std::unordered_set<node_type, aoc::array_hasher> visited;
-    build_graph(start, visited, board, node_to_idx, graph, false);
+    build_graph(start, visited, board, node_to_idx, graph, ignore_slopes);
   }
   std::vector<node_type> idx_to_node;
   idx_to_node.resize(node_to_idx.size());
   for (auto &v : node_to_idx) {
     idx_to_node[v.second] = v.first;
   }
-  {
-    std::vector<size_t> path;
-    std::unordered_set<size_t> visited;
-    std::unordered_map<size_t, int64_t> max_dists;
-    path.push_back(node_to_idx.at(start));
-    search(path, 0, graph, visited, max_dists);
-    auto end_idx = node_to_idx.at(stop);
-    std::cout << max_dists.at(end_idx) << std::endl;
+
+  std::cout << "digraph {" << std::endl;
+  for (size_t i = 0; i < idx_to_node.size(); ++i) {
+    auto curr = idx_to_node[i];
+    for (auto &v : graph.connectivity[i]) {
+      auto neighbor = idx_to_node[v.first];
+      std::cout << "\"(" << curr[0] << ", " << curr[1] << ")\""
+                << " -> "
+                << "\"(" << neighbor[0] << ", " << neighbor[1] << ")\""
+                << " [ label=\"" << v.second << "\"];" << std::endl;
+    }
   }
+  std::cout << "}" << std::endl;
 }

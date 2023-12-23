@@ -1,12 +1,3 @@
-/*!re2c re2c:flags:utf-8 = 1;*/
-/*!max:re2c*/
-/*!re2c
-re2c:define:YYCTYPE = char;
-re2c:yyfill:enable = 0;
-re2c:flags:tags = 1;
-re2c:yyfill:check = 1;
-*/
-
 #include "aoc.hpp"
 #include "geometry_tools.hpp"
 #include "graph_tools.hpp"
@@ -28,52 +19,160 @@ re2c:yyfill:check = 1;
 
 using node_type = std::array<int64_t, 2>;
 
-void search(
-    std::vector<node_type> &path,
-    std::unordered_set<node_type, aoc::array_hasher> &visited,
-    const std::vector<std::string> &board,
-    std::unordered_map<node_type, int64_t, aoc::array_hasher> &max_dists) {
-  auto gen_neighbors = [&](const node_type &curr) {
-    std::vector<std::pair<node_type, int64_t>> res;
+std::pair<node_type, int64_t>
+trace_path(node_type prev, node_type curr,
+           const std::vector<std::string> &board) {
+  std::pair<node_type, int64_t> res;
+  res.first = curr;
+  res.second = 1;
+  while (true) {
+    int64_t count = 0;
     if (curr[0] > 0) {
       node_type next = {curr[0] - 1, curr[1]};
       if (board[next[0]][next[1]] != '#') {
-        res.emplace_back(next, 1);
+        ++count;
       }
     }
     if (curr[0] + 1 < board.size()) {
       node_type next = {curr[0] + 1, curr[1]};
       if (board[next[0]][next[1]] != '#') {
-        res.emplace_back(next, 1);
+        ++count;
       }
     }
     if (curr[1] > 0) {
       node_type next = {curr[0], curr[1] - 1};
       if (board[next[0]][next[1]] != '#') {
-        res.emplace_back(next, 1);
+        ++count;
       }
     }
     if (curr[1] + 1 < board[0].size()) {
       node_type next = {curr[0], curr[1] + 1};
       if (board[next[0]][next[1]] != '#') {
-        res.emplace_back(next, 1);
+        ++count;
       }
     }
+    if (count == 2) {
+      if (curr[0] > 0) {
+        node_type next = {curr[0] - 1, curr[1]};
+        if (board[next[0]][next[1]] != '#') {
+          if (next != prev) {
+            prev = curr;
+            res.first = next;
+            curr = next;
+            ++res.second;
+            continue;
+          }
+        }
+      }
+      if (curr[0] + 1 < board.size()) {
+        node_type next = {curr[0] + 1, curr[1]};
+        if (board[next[0]][next[1]] != '#') {
+          if (next != prev) {
+            prev = curr;
+            res.first = next;
+            curr = next;
+            ++res.second;
+            continue;
+          }
+        }
+      }
+      if (curr[1] > 0) {
+        node_type next = {curr[0], curr[1] - 1};
+        if (board[next[0]][next[1]] != '#') {
+          if (next != prev) {
+            prev = curr;
+            res.first = next;
+            curr = next;
+            ++res.second;
+            continue;
+          }
+        }
+      }
+      if (curr[1] + 1 < board[0].size()) {
+        node_type next = {curr[0], curr[1] + 1};
+        if (board[next[0]][next[1]] != '#') {
+          if (next != prev) {
+            prev = curr;
+            res.first = next;
+            curr = next;
+            ++res.second;
+            continue;
+          }
+        }
+      }
+    } else {
+      break;
+    }
+  }
+  return res;
+}
 
-    return res;
-  };
-  auto neighbors = gen_neighbors(path.back());
+std::vector<std::pair<node_type, int64_t>>
+gen_neighbors(const node_type &curr, const std::vector<std::string> &board) {
+  std::vector<std::pair<node_type, int64_t>> res;
+  if (curr[0] > 0) {
+    node_type next = {curr[0] - 1, curr[1]};
+    if (board[next[0]][next[1]] != '#') {
+      res.push_back(trace_path(curr, next, board));
+    }
+  }
+  if (curr[0] + 1 < board.size()) {
+    node_type next = {curr[0] + 1, curr[1]};
+    if (board[next[0]][next[1]] != '#') {
+      res.push_back(trace_path(curr, next, board));
+    }
+  }
+  if (curr[1] > 0) {
+    node_type next = {curr[0], curr[1] - 1};
+    if (board[next[0]][next[1]] != '#') {
+      res.push_back(trace_path(curr, next, board));
+    }
+  }
+  if (curr[1] + 1 < board[0].size()) {
+    node_type next = {curr[0], curr[1] + 1};
+    if (board[next[0]][next[1]] != '#') {
+      res.push_back(trace_path(curr, next, board));
+    }
+  }
 
-  size_t visit_count = 0;
-  max_dists[path.back()] =
-      std::max<int64_t>(max_dists[path.back()], path.size() - 1);
+  return res;
+}
+
+void build_graph(
+    const node_type &curr,
+    std::unordered_set<node_type, aoc::array_hasher> &visited,
+    const std::vector<std::string> &board,
+    std::unordered_map<node_type, size_t, aoc::array_hasher> &node_to_idx,
+    aoc::directed_graph<int64_t> &graph) {
+  visited.emplace(curr);
+
+  auto neighbors = gen_neighbors(curr, board);
+  auto idx = node_to_idx.emplace(curr, node_to_idx.size()).first->second;
+
+  for (auto &n : neighbors) {
+    auto nidx = node_to_idx.emplace(n.first, node_to_idx.size()).first->second;
+    graph.add_edge(idx, nidx, n.second);
+    // graph.add_edge(nidx, idx, n.second);
+    if (visited.find(n.first) == visited.end()) {
+      // recurse
+      build_graph(n.first, visited, board, node_to_idx, graph);
+    }
+  }
+}
+
+void search(std::vector<size_t> &path, int64_t curr_dist,
+            const aoc::directed_graph<int64_t> &graph,
+            std::unordered_set<size_t> &visited,
+            std::unordered_map<size_t, int64_t> &max_dists) {
+  auto &neighbors = graph.connectivity[path.back()];
+
+  max_dists[path.back()] = std::max<int64_t>(max_dists[path.back()], curr_dist);
   for (auto &n : neighbors) {
     if (visited.find(n.first) == visited.end()) {
       // recurse
-      ++visit_count;
       path.emplace_back(n.first);
       visited.emplace(n.first);
-      search(path, visited, board, max_dists);
+      search(path, curr_dist + n.second, graph, visited, max_dists);
       path.pop_back();
       visited.erase(n.first);
     }
@@ -110,126 +209,24 @@ int main(int argc, char **argv) {
       break;
     }
   }
-  std::vector<node_type> path;
-  path.push_back(start);
-  std::unordered_set<node_type, aoc::array_hasher> visited;
-  std::unordered_map<node_type, int64_t, aoc::array_hasher> max_dists;
-  search(path, visited, board, max_dists);
-  for (auto &v : max_dists) {
-    if (v.first[0] + 1 == board.size()) {
-      std::cout << v.second << std::endl;
-    }
-  }
-#if 0
-  // first find the topology ordering of our DAG
-  auto term_func = [](const auto &v) { return false; };
-  std::unordered_map<node_type, int64_t, aoc::array_hasher> dists;
-  std::unordered_map<node_type, node_type, aoc::array_hasher> prev;
-  auto node_cmp = [](const auto &a, const auto &b) {
-    return std::lexicographical_compare(a.begin(), a.end(), b.begin(), b.end());
-  };
-  auto gen_neighbors = [&](const node_type &curr) {
-    std::vector<std::pair<node_type, int64_t>> res;
-    switch (board[curr[0]][curr[1]]) {
-    case '^': {
-      if (curr[0] > 0) {
-        node_type next = {curr[0] - 1, curr[1]};
-        if (board[next[0]][next[1]] != '#') {
-          res.emplace_back(next, 1);
-        }
-      }
-    } break;
-    case '<': {
-      if (curr[1] > 0) {
-        node_type next = {curr[0], curr[1] - 1};
-        if (board[next[0]][next[1]] != '#') {
-          res.emplace_back(next, 1);
-        }
-      }
-    } break;
-    case '>': {
-      if (curr[1] + 1 < board[0].size()) {
-        node_type next = {curr[0], curr[1] + 1};
-        if (board[next[0]][next[1]] != '#') {
-          res.emplace_back(next, 1);
-        }
-      }
-    } break;
-    case 'v': {
-      if (curr[0] + 1 < board.size()) {
-        node_type next = {curr[0] + 1, curr[1]};
-        if (board[next[0]][next[1]] != '#') {
-          res.emplace_back(next, 1);
-        }
-      }
-    } break;
-    default: {
-      if (curr[0] > 0) {
-        node_type next = {curr[0] - 1, curr[1]};
-        if (board[next[0]][next[1]] != '#' && board[next[0]][next[1]] != 'v') {
-          res.emplace_back(next, 1);
-        }
-      }
-      if (curr[0] + 1 < board.size()) {
-        node_type next = {curr[0] + 1, curr[1]};
-        if (board[next[0]][next[1]] != '#' && board[next[0]][next[1]] != '^') {
-          res.emplace_back(next, 1);
-        }
-      }
-      if (curr[1] > 0) {
-        node_type next = {curr[0], curr[1] - 1};
-        if (board[next[0]][next[1]] != '#' && board[next[0]][next[1]] != '>') {
-          res.emplace_back(next, 1);
-        }
-      }
-      if (curr[1] + 1 < board[0].size()) {
-        node_type next = {curr[0], curr[1] + 1};
-        if (board[next[0]][next[1]] != '#' && board[next[0]][next[1]] != '<') {
-          res.emplace_back(next, 1);
-        }
-      }
-    } break;
-    }
-
-    return res;
-  };
-  std::vector<node_type> idx_to_node;
-  idx_to_node.reserve(dists.size());
-  for (auto &v : dists) {
-    idx_to_node.emplace_back(v.first);
-  }
-  std::sort(idx_to_node.begin(), idx_to_node.end(),
-            [&](const node_type &a, const node_type &b) {
-              return dists.at(a) < dists.at(b);
-            });
   std::unordered_map<node_type, size_t, aoc::array_hasher> node_to_idx;
-  node_to_idx.reserve(idx_to_node.size());
-  for (size_t i = 0; i < idx_to_node.size(); ++i) {
-    node_to_idx.emplace(idx_to_node[i], i);
-  }
-  // build our graph
   aoc::directed_graph<int64_t> graph;
-  for (size_t idx = 0; idx < idx_to_node.size(); ++idx) {
-    const auto &curr = idx_to_node[idx];
-    auto neighbors = gen_neighbors(curr);
-    for (auto &n : neighbors) {
-      // TODO: do something to remove cycles
-      auto n_idx = node_to_idx.at(n.first);
-      graph.add_edge(n_idx, idx, n.second);
-    }
+  {
+    std::unordered_set<node_type, aoc::array_hasher> visited;
+    build_graph(start, visited, board, node_to_idx, graph);
   }
-  std::vector<int64_t> max_dists(idx_to_node.size());
-  for (size_t i = 0; i < idx_to_node.size(); ++i) {
-    for (auto &n : graph.connectivity[i]) {
-      max_dists[i] = std::max<int64_t>(max_dists[i], max_dists[n.first] + 1);
-    }
+  std::vector<node_type> idx_to_node;
+  idx_to_node.resize(node_to_idx.size());
+  for (auto &v : node_to_idx) {
+    idx_to_node[v.second] = v.first;
   }
-  for (size_t i = 0; i < max_dists.size(); ++i) {
-    auto node = idx_to_node[i];
-    if (node[0] + 1 == board.size()) {
-      std::cout << max_dists[i] << std::endl;
-      break;
-    }
+  {
+    std::vector<size_t> path;
+    std::unordered_set<size_t> visited;
+    std::unordered_map<size_t, int64_t> max_dists;
+    path.push_back(node_to_idx.at(start));
+    search(path, 0, graph, visited, max_dists);
+    auto end_idx = node_to_idx.at(stop);
+    std::cout << max_dists.at(end_idx) << std::endl;
   }
-#endif
 }
