@@ -29,6 +29,12 @@ template <class T, size_t Dims> struct hslab {
   }
 };
 
+void cramer2d(double a00, double a01, double a10, double a11, double b0,
+              double b1, double &x0, double &x1);
+
+bool ray_intersection(double x0, double y0, double vx0, double vy0, double x1,
+                      double y1, double vx1, double vy1, double &s, double &t);
+
 // 2D
 bool line_segment_intersection(double x0, double y0, double x1, double y1,
                                double x2, double y2, double x3, double y3,

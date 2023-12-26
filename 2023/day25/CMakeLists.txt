@@ -1,0 +1,11 @@
+SYMLINK_FILES(input.txt)
+SYMLINK_FILES(input_small.txt)
+
+add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/part1.cpp"
+  COMMAND "${AOC_RE2C_EXEC}" "-W" "-o" "${CMAKE_CURRENT_BINARY_DIR}/part1.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/part1.re.cpp"
+  DEPENDS re2c
+  DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/part1.re.cpp"
+  WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
+)
+
+AOC_EXECUTABLE(part1 "${CMAKE_CURRENT_BINARY_DIR}/part1.cpp")
