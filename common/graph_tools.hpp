@@ -19,7 +19,7 @@ template <class V> struct directed_graph {
 
   /// identifies all strongly connected components
   /// @return index of component the given node belongs to
-  std::vector<size_t> strongly_connected_components(size_t& count) const;
+  std::vector<size_t> strongly_connected_components(size_t &count) const;
 
   /// computes the shortest path (if any) from all nodes to all other nodes
   std::unordered_map<std::pair<size_t, size_t>, V, pair_hasher>
