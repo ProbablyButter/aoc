@@ -3,6 +3,8 @@
 
 #include <array>
 #include <cstddef>
+#include <cstdint>
+#include <vector>
 
 namespace aoc {
 
@@ -26,6 +28,29 @@ template <class T, size_t Dims> struct hslab {
       res *= upper[i] - lower[i];
     }
     return res;
+  }
+};
+
+struct hslab_iterator {
+  std::vector<int64_t> idx;
+  std::vector<int64_t> lower;
+  std::vector<int64_t> upper;
+
+  bool advance() {
+    size_t i = 0;
+    while (true) {
+      ++idx[i];
+      if (idx[i] >= upper[i]) {
+        idx[i] = lower[i];
+      } else {
+        return true;
+      }
+      ++i;
+      if (i >= idx.size()) {
+        return false;
+      }
+    }
+    return true;
   }
 };
 
