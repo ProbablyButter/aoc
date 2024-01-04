@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <unordered_set>
+#include <stdexcept>
 
 namespace aoc {
 template <class V>
@@ -164,12 +165,11 @@ void directed_graph<V>::dijkstra(size_t src,
 }
 
 template <class NodeType, class DistMetric, class NodeHash, class Term,
-          class Gen, class NodeCmp>
+          class Gen>
 void gen_dijkstra(const NodeType &src, Term &&terminate_functor,
                   Gen &&gen_neighbors,
                   std::unordered_map<NodeType, DistMetric, NodeHash> &dists,
-                  std::unordered_map<NodeType, NodeType, NodeHash> &prev,
-                  NodeCmp &&node_cmp) {
+                  std::unordered_map<NodeType, NodeType, NodeHash> &prev) {
   dists.clear();
   prev.clear();
   dists.emplace(src, 0);
@@ -180,7 +180,8 @@ void gen_dijkstra(const NodeType &src, Term &&terminate_functor,
     if (ia == dists.end()) {
       if (ib == dists.end()) {
         // both inf dist
-        return node_cmp(a, b);
+        // I think it should be impossible to get here
+        throw std::runtime_error("a and b both inf dist");
       }
       return true;
     } else {

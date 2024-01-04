@@ -91,39 +91,35 @@ int main(int argc, char **argv) {
     }
     return res;
   };
-  auto node_cmp = [](const node_type &a, const node_type &b) {
-    return std::lexicographical_compare(a.begin(), a.end(), b.begin(), b.end());
-  };
 
   // top left
   aoc::gen_dijkstra(node_type{static_cast<int64_t>(board.size()) - 1,
                               static_cast<int64_t>(board[0].size()) - 1},
-                    term_func, gen_neighbors, dists[0], prev, node_cmp);
+                    term_func, gen_neighbors, dists[0], prev);
   // top
   aoc::gen_dijkstra(node_type{static_cast<int64_t>(board.size()) - 1, start[1]},
-                    term_func, gen_neighbors, dists[1], prev, node_cmp);
+                    term_func, gen_neighbors, dists[1], prev);
   // top right
   aoc::gen_dijkstra(node_type{static_cast<int64_t>(board.size()) - 1, 0},
-                    term_func, gen_neighbors, dists[2], prev, node_cmp);
+                    term_func, gen_neighbors, dists[2], prev);
   // left
   aoc::gen_dijkstra(
       node_type{start[0], static_cast<int64_t>(board[0].size()) - 1}, term_func,
-      gen_neighbors, dists[3], prev, node_cmp);
+      gen_neighbors, dists[3], prev);
   // mid
-  aoc::gen_dijkstra(start, term_func, gen_neighbors, dists[3 + 1], prev,
-                    node_cmp);
+  aoc::gen_dijkstra(start, term_func, gen_neighbors, dists[3 + 1], prev);
   // right
   aoc::gen_dijkstra(node_type{start[0], 0}, term_func, gen_neighbors,
-                    dists[3 + 2], prev, node_cmp);
+                    dists[3 + 2], prev);
   // bottom left
   aoc::gen_dijkstra(node_type{0, static_cast<int64_t>(board[0].size()) - 1},
-                    term_func, gen_neighbors, dists[2 * 3], prev, node_cmp);
+                    term_func, gen_neighbors, dists[2 * 3], prev);
   // bottom
   aoc::gen_dijkstra(node_type{0, start[1]}, term_func, gen_neighbors,
-                    dists[2 * 3 + 1], prev, node_cmp);
+                    dists[2 * 3 + 1], prev);
   // bottom right
   aoc::gen_dijkstra(node_type{0, 0}, term_func, gen_neighbors, dists[2 * 3 + 2],
-                    prev, node_cmp);
+                    prev);
 
   std::vector<int64_t> max_dists(9, 0);
 

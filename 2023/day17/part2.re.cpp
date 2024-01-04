@@ -132,16 +132,13 @@ int main(int argc, char **argv) {
     }
     return neighbors;
   };
-  auto node_cmp = [&](const node_type &a, const node_type &b) {
-    return std::lexicographical_compare(a.begin(), a.end(), b.begin(), b.end());
-  };
   node_type start = {0};
   for (auto &v : start) {
     v = 0;
   }
   std::unordered_map<node_type, int64_t, aoc::array_hasher> dists;
   std::unordered_map<node_type, node_type, aoc::array_hasher> prevs;
-  gen_dijkstra(start, term_func, gen_neighbors, dists, prevs, node_cmp);
+  gen_dijkstra(start, term_func, gen_neighbors, dists, prevs);
   std::cout << dists.at(term_node) << std::endl;
 #if 0
   for (auto &v : term_node) {

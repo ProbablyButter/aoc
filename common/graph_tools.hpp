@@ -62,12 +62,11 @@ private:
 };
 
 template <class NodeType, class DistMetric, class NodeHash, class Term,
-          class Gen, class NodeCmp = std::less<NodeType>>
+          class Gen>
 void gen_dijkstra(const NodeType &src, Term &&terminate_functor,
                   Gen &&gen_neighbors,
                   std::unordered_map<NodeType, DistMetric, NodeHash> &dists,
-                  std::unordered_map<NodeType, NodeType, NodeHash> &prev,
-                  NodeCmp &&node_cmp);
+                  std::unordered_map<NodeType, NodeType, NodeHash> &prev);
 
 } // namespace aoc
 
