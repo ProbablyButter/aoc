@@ -26,15 +26,14 @@ re2c:yyfill:check = 1;
 #include <unordered_set>
 #include <vector>
 
-long long parse_mul(const std::string &data)
-{
+long long parse_mul(const std::string &data) {
   bool enabled = true;
   long long sum = 0;
   const char *YYCURSOR = data.data();
   const char *YYMARKER;
   const char *d0, *d1, *d2, *d3;
   /*!stags:re2c format = 'const char *@@;'; */
- parse_start:
+parse_start:
   // look for mul(
   /*!re2c
 "mul(" @d0 [0-9]+ @d1 "," @d2 [0-9]+ @d3 ")" {
