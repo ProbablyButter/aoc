@@ -66,6 +66,32 @@ struct pair_hasher {
   };
 };
 
+struct tuple_hasher {
+private:
+  template <class T0>
+  static void impl(hasher &hash, const T0 &t0) noexcept {
+    hash.append(reinterpret_cast<const uint8_t *>(&t0), sizeof(T0));
+  }
+
+  template <class T0, class T1, class... Ts>
+  static void impl(hasher &hash, const T0 &t0, const T1 &t1,
+                     const Ts &...rem) noexcept {
+    hash.append(reinterpret_cast<const uint8_t *>(&t0), sizeof(T0));
+    impl(hash, t1, rem...);
+  }
+
+public:
+  template <class... Ts>
+  size_t operator()(const std::tuple<Ts...> &v) const noexcept {
+    hasher hash;
+    hash.init(123456789ull);
+    std::apply([&](Ts const &...args) { tuple_hasher::impl(hash, args...); },
+               v);
+    hash.finalize();
+    return hash.data[1];
+  };
+};
+
 struct array_hasher {
   template <class T, size_t N>
   size_t operator()(const std::array<T, N> &v) const noexcept {
