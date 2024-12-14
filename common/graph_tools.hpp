@@ -36,12 +36,17 @@ template <class V> struct directed_graph {
     dijkstra(src, dists, prev, [](size_t n) { return false; });
   }
 
-  /// shortest path from src node to dst node
-  void dijkstra(size_t src, size_t dst, size_t &count,
-                std::unordered_map<size_t, V> &dists,
+  /// shortest path from src node to dst node, if any
+  /// dst will be in prev if reached destination node.
+  void dijkstra(size_t src, size_t dst, std::unordered_map<size_t, V> &dists,
                 std::unordered_map<size_t, size_t> &prev) const {
     dijkstra(src, dists, prev, [=](size_t n) { return n == dst; });
   }
+
+  /// @param node_callback bool(size_t curr), return true to terminate searching
+  /// children of curr.
+  template<class F>
+  void depth_first_search(size_t src, F&& node_callback);
 
   bool add_edge(size_t src, size_t dst, V weight) {
     while (connectivity.size() <= src) {

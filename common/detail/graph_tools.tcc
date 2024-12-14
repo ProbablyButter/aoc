@@ -2,8 +2,8 @@
 #define AOC_GRAPH_TOOLS_TCC
 
 #include <algorithm>
-#include <unordered_set>
 #include <stdexcept>
+#include <unordered_set>
 
 namespace aoc {
 template <class V>
@@ -160,6 +160,17 @@ void directed_graph<V>::dijkstra(size_t src,
           std::push_heap(queue.begin(), queue.end(), comparator);
         }
       }
+    }
+  }
+}
+
+template <class V>
+template <class F>
+void directed_graph<V>::depth_first_search(size_t src, F &&node_callback) {
+  if (!node_callback(src)) {
+    auto &children = connectivity[src];
+    for (auto &c : children) {
+      depth_first_search(c.first, node_callback);
     }
   }
 }
