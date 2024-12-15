@@ -45,16 +45,17 @@ template <class V> struct directed_graph {
 
   /// @param node_callback bool(size_t curr), return true to terminate searching
   /// children of curr.
-  template<class F>
-  void depth_first_search(size_t src, F&& node_callback);
+  template <class F> void depth_first_search(size_t src, F &&node_callback);
 
-  bool add_edge(size_t src, size_t dst, V weight) {
+  void ensure_node(size_t src) {
     while (connectivity.size() <= src) {
       connectivity.emplace_back();
     }
-    while (connectivity.size() <= dst) {
-      connectivity.emplace_back();
-    }
+  }
+
+  bool add_edge(size_t src, size_t dst, V weight) {
+    ensure_node(src);
+    ensure_node(dst);
     return connectivity[src].emplace(dst, weight).second;
   }
 
