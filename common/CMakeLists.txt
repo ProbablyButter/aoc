@@ -20,6 +20,7 @@ add_library(aoc_common
   segmented_range.cpp
   string_tools.cpp
   geometry_tools.cpp
+  matrix.cpp
 )
 target_compile_features(aoc_common PUBLIC cxx_std_17)
 target_include_directories(aoc_common PUBLIC common)
