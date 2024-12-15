@@ -21,6 +21,7 @@ add_library(aoc_common
   string_tools.cpp
   geometry_tools.cpp
   matrix.cpp
+  fraction.cpp
 )
 target_compile_features(aoc_common PUBLIC cxx_std_17)
 target_include_directories(aoc_common PUBLIC common)
@@ -42,3 +43,9 @@ target_link_libraries(test_graph_tools PUBLIC aoc_common)
 
 add_executable(test_hash test_hash.cpp)
 target_link_libraries(test_hash PUBLIC aoc_common)
+
+add_executable(test_fraction test_fraction.cpp)
+target_link_libraries(test_fraction PUBLIC aoc_common)
+
+add_executable(test_matrix test_matrix.cpp)
+target_link_libraries(test_matrix PUBLIC aoc_common)

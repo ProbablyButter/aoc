@@ -4,55 +4,49 @@
 
 namespace aoc {
 
-void extended_euclid(long long a, long long b, long long &x, long long &y,
-                     long long &gcd) {
-  // assume a > 0 and b > 0
-  long long r0 = a;
-  long long r1 = b;
-  long long s0 = 1;
-  long long s1 = 0;
-  long long t0 = 0;
-  long long t1 = 1;
-  while (true) {
-    long long q = r0 / r1;
-    long long rn = r0 - q * r1;
-    long long sn = s0 - q * s1;
-    long long tn = t0 - q * t1;
-    if (rn == 0) {
-      gcd = r1;
-      x = s1;
-      y = t1;
-      if (gcd < 0) {
-        gcd = -gcd;
-        x = -x;
-        y = -y;
-      }
-
-      return;
+long long permute_parity(const std::vector<long long> &P) {
+  // https://codeforces.com/blog/entry/97849
+  switch (P.size()) {
+  case 0:
+    return 0;
+  case 1:
+    return 1;
+  default: {
+    std::vector<long long> cur(P.size());
+    std::vector<long long> inv_cur(P.size());
+    for (size_t i = 0; i < cur.size(); ++i) {
+      cur[i] = i;
+      inv_cur[i] = i;
     }
-    r0 = r1;
-    r1 = rn;
-    s0 = s1;
-    s1 = sn;
-    t0 = t1;
-    t1 = tn;
+    auto do_cycle = [&](long long i, long long j, long long k) {
+      long long tmp = cur[k];
+      cur[k] = cur[j];
+      cur[j] = cur[i];
+      cur[i] = tmp;
+
+      inv_cur[cur[i]] = i;
+      inv_cur[cur[j]] = j;
+      inv_cur[cur[k]] = k;
+    };
+    for (long long i = 0; i < P.size() - 2; ++i) {
+      if (cur[i] != P[i]) {
+        long long j = inv_cur[P[i]];
+        if (j != P.size() - 1) {
+          do_cycle(P.size() - 1, j, i);
+        } else {
+          do_cycle(P.size() - 2, j, i);
+        }
+      }
+    }
+    if (cur.back() != P.back()) {
+      return -1;
+    }
+    return 1;
+  }
   }
 }
 
-imatrix &imatrix::operator+=(const imatrix &o) {
-  for (size_t i = 0; i < data.size(); ++i) {
-    data[i] += o.data[i];
-  }
-  return *this;
-}
-
-imatrix &imatrix::operator-=(const imatrix &o) {
-  for (size_t i = 0; i < data.size(); ++i) {
-    data[i] -= o.data[i];
-  }
-  return *this;
-}
-
+#if 0
 imatrix imatrix::operator*(const imatrix &o) const {
   imatrix res(height, o.width);
   for (long long i = 0; i < height; ++i) {
@@ -74,4 +68,14 @@ void imatrix::set_eye(long long d) {
     operator()(i, i) = 1;
   }
 }
+
+long long imatrix::det() const {
+  
+}
+
+void imatrix::hermite_normal_form(imatrix &H, imatrix &K) const {
+  K.set_eye(height);
+  // construct permutation matrix K so every principal minor of A is nonsingular
+}
+#endif
 } // namespace aoc
