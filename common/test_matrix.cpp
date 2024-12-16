@@ -35,7 +35,7 @@ int main() {
   std::cout << std::endl;
   aoc::permute_matrix P;
   aoc::matrix<scalar_type> LU = A;
-  LU.LUP_decomposition(P);
+  aoc::LUP_decomposition(LU, P);
 
   for (long long row = 0; row < A.height; ++row) {
     for (long long col = 0; col < A.width; ++col) {
@@ -46,7 +46,7 @@ int main() {
   std::cout << std::endl;
 
   aoc::matrix<scalar_type> L, U;
-  LU.split_LU(L, U);
+  aoc::split_LU(LU, L, U);
 
   for (long long row = 0; row < A.height; ++row) {
     for (long long col = 0; col < A.width; ++col) {

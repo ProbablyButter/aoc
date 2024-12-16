@@ -20,6 +20,11 @@ template <class T> struct matrix_base {
 
   virtual ~matrix_base() = default;
 
+  virtual void resize(long long h_, long long w_) {
+    height = h_;
+    width = w_;
+  }
+
   virtual T &operator()(long long row, long long col) = 0;
   virtual const T &operator()(long long row, long long col) const {
     return const_cast<matrix_base<T> &>(*this).operator()(row, col);
@@ -65,6 +70,12 @@ struct permute_matrix : public matrix_base<const long long> {
     for (long long i = 0; i < w; ++i) {
       data[i] = i;
     }
+  }
+
+  void resize(long long h_, long long w_) override {
+    data.resize(h_);
+    height = h_;
+    width = h_;
   }
 
   permute_matrix &operator=(const permute_matrix &) = default;
@@ -190,6 +201,14 @@ template <class T> struct minor_matrix : public matrix_base<T> {
     cols.erase(cols.begin() + r);
     --width;
   }
+
+  void resize(long long h_, long long w_) override {
+    // potentially end rows/cols will point to bogus indices...
+    rows.resize(h_);
+    cols.resize(w_);
+    height = h_;
+    width = h_;
+  }
 };
 
 // dense matrix
@@ -236,59 +255,10 @@ template <class T> struct matrix : public matrix_base<T> {
     return data[row * width + col];
   }
 
-  // P A = L U
-  // stores L and U into *this, diagonals belong to U (diagonals of L are
-  // implicitly unity)
-  // must be square
-  // uses partial pivoting
-  void LUP_decomposition(permute_matrix &P) {
-    P = permute_matrix(width);
-    for (long long row = 0; row < height; ++row) {
-      // find pivot
-      {
-        long long prow = row;
-        for (long long tmp = row; tmp < height; ++tmp) {
-          using namespace std;
-          if (abs((*this)(prow, row)) < abs((*this)(tmp, row))) {
-            prow = tmp;
-          }
-        }
-        if (prow != row) {
-          // swap rows prow and row
-          std::swap(P.data[row], P.data[prow]);
-          for (long long col = 0; col < width; ++col) {
-            std::swap((*this)(prow, col), (*this)(row, col));
-          }
-        }
-      }
-      // perform gaussian elimination
-      for (long long prow = row + 1; prow < height; ++prow) {
-        // assume LU(row,row) != 0, otherwise singular
-        // TODO: should this be negative?
-        (*this)(prow, row) /= (*this)(row, row);
-        for (long long col = row + 1; col < width; ++col) {
-          (*this)(prow, col) -= (*this)(prow, row) * (*this)(row, col);
-        }
-      }
-    }
-  }
-
-  // split this combined LU matrix into two separate L and U matrices
-  void split_LU(matrix &L, matrix &U) const {
-    L = *this;
-    U = *this;
-    for (long long row = 0; row < height; ++row) {
-      for (long long col = row + 1; col < width; ++col) {
-        L(row, col) = 0;
-      }
-      L(row, row) = 1;
-    }
-
-    for (long long row = 0; row < height; ++row) {
-      for (long long col = 0; col < row; ++col) {
-        U(row, col) = 0;
-      }
-    }
+  void resize(long long h_, long long w_) override {
+    data.resize(h_ * w_);
+    height = h_;
+    width = h_;
   }
 };
 
@@ -304,6 +274,93 @@ matrix<T> operator*(const matrix_base<T> &a, const matrix_base<U> &o) {
     }
   }
   return res;
+}
+
+template <class T>
+// P A = L U
+// stores L and U into *this, diagonals belong to U (diagonals of L are
+// implicitly unity)
+// must be square
+// uses partial pivoting
+void LUP_decomposition(T &&A, permute_matrix &P) {
+  P = permute_matrix(A.width);
+  for (long long row = 0; row < A.height; ++row) {
+    // find pivot
+    {
+      long long prow = row;
+      for (long long tmp = row; tmp < A.height; ++tmp) {
+        using namespace std;
+        if (abs(A(prow, row)) < abs(A(tmp, row))) {
+          prow = tmp;
+        }
+      }
+      if (prow != row) {
+        // swap rows prow and row
+        std::swap(P.data[row], P.data[prow]);
+        for (long long col = 0; col < A.width; ++col) {
+          std::swap(A(prow, col), A(row, col));
+        }
+      }
+    }
+    // perform gaussian elimination
+    for (long long prow = row + 1; prow < A.height; ++prow) {
+      // assume LU(row,row) != 0, otherwise singular
+      // TODO: should this be negative?
+      A(prow, row) /= A(row, row);
+      for (long long col = row + 1; col < A.width; ++col) {
+        A(prow, col) -= A(prow, row) * A(row, col);
+      }
+    }
+  }
+}
+
+template <class T, class TU>
+void split_LU(T &&LU, matrix<TU> &L, matrix<TU> &U) {
+  L = LU;
+  U = LU;
+  for (long long row = 0; row < LU.height; ++row) {
+    for (long long col = row + 1; col < LU.width; ++col) {
+      L(row, col) = 0;
+    }
+    L(row, row) = 1;
+  }
+
+  for (long long row = 0; row < LU.height; ++row) {
+    for (long long col = 0; col < row; ++col) {
+      U(row, col) = 0;
+    }
+  }
+}
+
+template <class T, class TP, class TS, class U>
+void solve_LU(const matrix_base<T> &LU, const permute_matrix &P,
+              const matrix_base<TS> &rhs, U &&sol) {
+  sol.resize(rhs.height, rhs.width);
+  for (long long row = 0; row < rhs.height; ++row) {
+    for (long long col = 0; col < rhs.width; ++col) {
+      sol(row, col) = rhs(row, col);
+    }
+  }
+  // sol = P b
+  P.apply_P_left(sol);
+  // forward apply
+  for (long long row = 0; row < rhs.height; ++row) {
+    for (long long col = 0; col < rhs.width; ++col) {
+      for (long long k = 0; k < row; ++k) {
+        sol(row, col) -= LU(row, k) * sol(k, col);
+      }
+    }
+  }
+
+  // backsolve
+  for (long long i = rhs.height - 1; i >= 0; --i) {
+    for (long long col = 0; col < rhs.width; ++col) {
+      for (long long k = i + 1; k < rhs.height; ++k) {
+        sol(i, col) -= LU(i, k) * sol(k, col);
+      }
+      sol(i, col) /= LU(i, i);
+    }
+  }
 }
 
 /// dense integer matrix
