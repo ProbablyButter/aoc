@@ -1,6 +1,8 @@
 #ifndef AOC_FRACTION_HPP
 #define AOC_FRACTION_HPP
 
+#include <iosfwd>
+
 namespace aoc {
 /// finds x, y, gcd(a, b) such that
 /// a x + b y = gcd(a, b)
@@ -12,6 +14,20 @@ void extended_euclid(long long a, long long b, long long &x, long long &y,
 
 struct fraction {
   long long num = 0, den = 1;
+
+  void reduce();
+  
+  fraction() noexcept = default;
+  fraction(const fraction &) noexcept = default;
+  fraction(long long n, long long d) : num(n), den(d) { reduce(); }
+
+  fraction& operator=(const fraction&) noexcept = default;
+
+  fraction& operator=(long long v) noexcept{
+    num = v;
+    den = 1;
+    return *this;
+  }
 
   fraction &operator+=(const fraction &o);
   fraction &operator-=(const fraction &o);
@@ -31,7 +47,7 @@ struct fraction {
     return res;
   }
 
-  int operator<=>(const fraction& o) const; 
+  int operator<=>(const fraction &o) const;
 
   fraction operator-(const fraction &o) const {
     fraction res(*this);
@@ -79,9 +95,9 @@ struct fraction {
     fraction res{-num, den};
     return res;
   }
-
-  void reduce();
 };
+
+extern fraction abs(const fraction &f);
 
 inline fraction operator+(long long i, const fraction &o) { return o + i; }
 inline fraction operator-(long long i, const fraction &o) {
@@ -95,5 +111,8 @@ inline fraction operator/(long long i, const fraction &o) {
   res /= o;
   return res;
 }
+
+extern std::ostream &operator<<(std::ostream &out, const fraction &f);
+
 } // namespace aoc
 #endif

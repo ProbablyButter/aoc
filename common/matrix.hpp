@@ -1,9 +1,11 @@
 #ifndef AOC_MATRIX_HPP
 #define AOC_MATRIX_HPP
 
+#include <cmath>
 #include <vector>
 
 namespace aoc {
+double abs(double v) { return fabs(v); }
 
 // doesn't have any concept of data ownership, but implements basic matrix
 // operations predecated on some virtual function calls
@@ -234,14 +236,59 @@ template <class T> struct matrix : public matrix_base<T> {
     return data[row * width + col];
   }
 
-  // stores L and U into LU, diagonals belong to U (diagonals of L are
+  // P A = L U
+  // stores L and U into *this, diagonals belong to U (diagonals of L are
   // implicitly unity)
-  // this must be square
+  // must be square
   // uses partial pivoting
-  void PLU_decomposition(permute_matrix &P, matrix &LU) const {
+  void LUP_decomposition(permute_matrix &P) {
     P = permute_matrix(width);
-    LU = matrix(height, width);
-    // TODO: implement
+    for (long long row = 0; row < height; ++row) {
+      // find pivot
+      {
+        long long prow = row;
+        for (long long tmp = row; tmp < height; ++tmp) {
+          using namespace std;
+          if (abs((*this)(prow, row)) < abs((*this)(tmp, row))) {
+            prow = tmp;
+          }
+        }
+        if (prow != row) {
+          // swap rows prow and row
+          std::swap(P.data[row], P.data[prow]);
+          for (long long col = 0; col < width; ++col) {
+            std::swap((*this)(prow, col), (*this)(row, col));
+          }
+        }
+      }
+      // perform gaussian elimination
+      for (long long prow = row + 1; prow < height; ++prow) {
+        // assume LU(row,row) != 0, otherwise singular
+        // TODO: should this be negative?
+        (*this)(prow, row) /= (*this)(row, row);
+        for (long long col = row + 1; col < width; ++col) {
+          (*this)(prow, col) -= (*this)(prow, row) * (*this)(row, col);
+        }
+      }
+    }
+  }
+
+  // split this combined LU matrix into two separate L and U matrices
+  void split_LU(matrix &L, matrix &U) const {
+    L = *this;
+    U = *this;
+    for (long long row = 0; row < height; ++row) {
+      for (long long col = row + 1; col < width; ++col) {
+        L(row, col) = 0;
+      }
+      L(row, row) = 1;
+    }
+
+    for (long long row = 0; row < height; ++row) {
+      for (long long col = 0; col < row; ++col) {
+        U(row, col) = 0;
+      }
+    }
   }
 };
 
@@ -250,6 +297,7 @@ matrix<T> operator*(const matrix_base<T> &a, const matrix_base<U> &o) {
   matrix<T> res(a.height, o.width);
   for (long long i = 0; i < a.height; ++i) {
     for (long long j = 0; j < o.width; ++j) {
+      res(i, j) = 0;
       for (long long k = 0; k < a.width; ++k) {
         res(i, j) += a(i, k) * o(k, j);
       }

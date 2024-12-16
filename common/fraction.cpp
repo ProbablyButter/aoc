@@ -1,6 +1,8 @@
 #include "fraction.hpp"
 
+#include <cmath>
 #include <numeric>
+#include <ostream>
 
 namespace aoc {
 
@@ -74,6 +76,10 @@ void fraction::reduce() {
   }
 }
 
+fraction abs(const fraction &f) {
+  return fraction{std::abs(f.num), std::abs(f.den)};
+}
+
 int fraction::operator<=>(const fraction &o) const {
   auto lcm = std::lcm(o.den, den);
   auto tn = num * lcm / den;
@@ -137,5 +143,13 @@ fraction &fraction::operator/=(long long o) {
   den *= o;
   reduce();
   return *this;
+}
+
+extern std::ostream &operator<<(std::ostream &out, const fraction &f) {
+  if(f.den == 1){
+    return out << f.num;
+  }
+  
+  return out << f.num << "/" << f.den;
 }
 } // namespace aoc
