@@ -21,6 +21,8 @@ struct fraction {
   fraction(const fraction &) noexcept = default;
   fraction(long long n, long long d) : num(n), den(d) { reduce(); }
 
+  explicit operator bool() const { return num; }
+
   fraction& operator=(const fraction&) noexcept = default;
 
   fraction& operator=(long long v) noexcept{

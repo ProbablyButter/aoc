@@ -5,7 +5,7 @@
 #include <vector>
 
 namespace aoc {
-double abs(double v) { return fabs(v); }
+inline double abs(double v) { return fabs(v); }
 
 // doesn't have any concept of data ownership, but implements basic matrix
 // operations predecated on some virtual function calls
@@ -262,6 +262,9 @@ template <class T> struct matrix : public matrix_base<T> {
   }
 };
 
+/// dense integer matrix
+using imatrix = matrix<long long>;
+
 template <class T, class U>
 matrix<T> operator*(const matrix_base<T> &a, const matrix_base<U> &o) {
   matrix<T> res(a.height, o.width);
@@ -277,12 +280,15 @@ matrix<T> operator*(const matrix_base<T> &a, const matrix_base<U> &o) {
 }
 
 template <class T>
-// P A = L U
-// stores L and U into *this, diagonals belong to U (diagonals of L are
-// implicitly unity)
-// must be square
-// uses partial pivoting
-void LUP_decomposition(T &&A, permute_matrix &P) {
+/// P A = L U
+/// stores L and U into *this, diagonals belong to U (diagonals of L are
+/// implicitly unity)
+/// must be square
+/// uses partial pivoting
+/// @return number of swaps in P
+///
+long long LUP_decomposition(T &&A, permute_matrix &P) {
+  long long res = 0;
   P = permute_matrix(A.width);
   for (long long row = 0; row < A.height; ++row) {
     // find pivot
@@ -296,6 +302,7 @@ void LUP_decomposition(T &&A, permute_matrix &P) {
       }
       if (prow != row) {
         // swap rows prow and row
+        ++res;
         std::swap(P.data[row], P.data[prow]);
         for (long long col = 0; col < A.width; ++col) {
           std::swap(A(prow, col), A(row, col));
@@ -312,6 +319,25 @@ void LUP_decomposition(T &&A, permute_matrix &P) {
       }
     }
   }
+  return res;
+}
+
+/// @param A is a matrix from LUP_decomposition
+template <class T> auto LUP_determinant(T &&A, long long swaps) {
+  auto res = A(0, 0);
+  for (long long i = 1; i < A.height; ++i) {
+    res *= A(i, i);
+  }
+  return res * (2 * (swaps % 2) - 1);
+}
+
+/// @param A is a matrix from LUP_decomposition
+template <class T> auto LUP_determinant(T &&A, const permute_matrix &P) {
+  auto res = A(0, 0);
+  for (long long i = 1; i < A.height; ++i) {
+    res *= A(i, i);
+  }
+  return res * P.parity();
 }
 
 template <class T, class TU>
@@ -363,7 +389,13 @@ void solve_LU(const matrix_base<T> &LU, const permute_matrix &P,
   }
 }
 
-/// dense integer matrix
+///
+/// Computes H and U such that H = U A
+/// where H is the row Hermite normal form and U is unimodular
+/// H initially holds A
+///
+extern void hermite_normal_form(imatrix &H, imatrix &U);
+
 // struct imatrix : public matrix<long long> {
 //   imatrix() : matrix(0, 0) {}
 //   imatrix(long long h_, long long w_) : matrix(h_, w_) {}
