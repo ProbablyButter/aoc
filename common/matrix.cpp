@@ -46,6 +46,14 @@ long long permute_parity(const std::vector<long long> &P) {
   }
 }
 
+void permute_matrix::invert() {
+  std::vector<long long> tmp(data.size());
+  for (long long i = 0; i < data.size(); ++i) {
+    tmp[data[i]] = i;
+  }
+  data = std::move(tmp);
+}
+
 #if 0
 imatrix imatrix::operator*(const imatrix &o) const {
   imatrix res(height, o.width);

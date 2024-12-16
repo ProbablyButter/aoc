@@ -5,24 +5,147 @@
 
 namespace aoc {
 
-// parity of the permutation, +/- 1
-long long permute_parity(const std::vector<long long> &P);
-
-// dense matrix
-template <class T> struct matrix {
-  std::vector<T> data;
+// doesn't have any concept of data ownership, but implements basic matrix
+// operations predecated on some virtual function calls
+template <class T> struct matrix_base {
   long long width;
   long long height;
 
-  matrix() : width(0), height(0) {}
-  matrix(long long h_, long long w_) : data(w_ * h_), width(w_), height(h_) {}
+  matrix_base() : width(0), height(0) {}
+  matrix_base(long long h_, long long w_) : width(w_), height(h_) {}
+
+  matrix_base(const matrix_base &) = default;
+
+  virtual ~matrix_base() = default;
+
+  virtual T &operator()(long long row, long long col) = 0;
+  virtual const T &operator()(long long row, long long col) const {
+    return const_cast<matrix_base<T> &>(*this).operator()(row, col);
+  }
+
+  template <class U> matrix_base &operator+=(const matrix_base<U> &o) {
+    for (long long row = 0; row < height; ++row) {
+      for (long long col = 0; col < width; ++col) {
+        this->operator()(row, col) += o(row, col);
+      }
+    }
+    return *this;
+  }
+
+  template <class U> matrix_base &operator-=(const matrix_base<U> &o) {
+    for (long long row = 0; row < height; ++row) {
+      for (long long col = 0; col < width; ++col) {
+        this->operator()(row, col) -= o(row, col);
+      }
+    }
+    return *this;
+  }
+};
+
+// parity of the permutation, +/- 1
+long long permute_parity(const std::vector<long long> &P);
+
+struct permute_matrix : public matrix_base<const long long> {
+  std::vector<long long> data;
+  long long internal[2] = {0, 1};
+
+  permute_matrix() : matrix_base<const long long>(0, 0) {}
+
+  permute_matrix(const permute_matrix &) = default;
+
+  permute_matrix(permute_matrix &&o) noexcept
+      : matrix_base<const long long>(o), data(std::move(o.data)) {}
+
+  // identity permutation
+  permute_matrix(long long w) : matrix_base<const long long>(w, w), data(w) {
+    for (long long i = 0; i < w; ++i) {
+      data[i] = i;
+    }
+  }
+
+  const long long &operator()(long long row, long long col) override {
+    return internal[data[row] == col];
+  }
+
+  long long parity() const { return permute_parity(data); }
+
+  void invert();
+
+  // A = P A
+  // swaps rows
+  template <class U> void apply_P_left(U &&A) {
+    std::vector<bool> done(height);
+    for (long long i = 0; i < data.size(); ++i) {
+      if (done[i]) {
+        continue;
+      }
+      done[i] = true;
+      long long prev_j = i;
+      long long j = data[i];
+      while (i != j) {
+        // swap prev_j and j
+        for (size_t k = 0; k < width; ++k) {
+          std::swap(A(prev_j, k), A(j, k));
+        }
+        done[j] = true;
+        prev_j = j;
+        j = data[j];
+      }
+    }
+  }
+
+  // A = A P
+  // swaps columns
+  template <class U> void apply_P_right(U &&A) {
+    std::vector<bool> done(width);
+    for (long long i = 0; i < data.size(); ++i) {
+      if (done[i]) {
+        continue;
+      }
+      done[i] = true;
+      long long prev_j = i;
+      long long j = data[i];
+      while (i != j) {
+        // swap prev_j and j
+        for (size_t k = 0; k < height; ++k) {
+          std::swap(A(k, prev_j), A(k, j));
+        }
+        done[j] = true;
+        prev_j = j;
+        j = A[j];
+      }
+    }
+  }
+};
+
+// dense matrix
+template <class T> struct matrix : public matrix_base<T> {
+  using matrix_base<T>::width;
+  using matrix_base<T>::height;
+  std::vector<T> data;
+
+  matrix() : matrix_base<T>() {}
+  matrix(long long h_, long long w_) : matrix_base<T>(h_, w_), data(w_ * h_) {}
 
   matrix(const matrix &) = default;
 
-  matrix(matrix &&o) noexcept
-      : data(std::move(o.data)), width(o.width), height(o.height) {}
+  matrix(matrix &&o) noexcept : matrix_base<T>(o), data(std::move(o.data)) {}
 
   matrix &operator=(const matrix &) = default;
+
+  template <class U> matrix &operator=(const matrix_base<U> &o) {
+    if (&o != this) {
+      width = o.width;
+      height = o.height;
+      data.resize(width * height);
+      for (long long row = 0; row < height; ++row) {
+        for (long long col = 0; col < width; ++col) {
+          this->operator()(row, col) = o(row, col);
+        }
+      }
+    }
+    return *this;
+  }
 
   matrix &operator=(matrix &&o) noexcept {
     if (&o != this) {
@@ -33,28 +156,13 @@ template <class T> struct matrix {
     return *this;
   }
 
-  auto &operator()(long long row, long long col) {
+  using matrix_base<T>::operator();
+
+  T &operator()(long long row, long long col) override {
     return data[row * width + col];
   }
 
-  const auto &operator()(long long row, long long col) const {
-    return data[row * width + col];
-  }
-  matrix &operator+=(const matrix &o) {
-    for (size_t i = 0; i < data.size(); ++i) {
-      data[i] += o.data[i];
-    }
-    return *this;
-  }
-
-  matrix &operator-=(const matrix &o) {
-    for (size_t i = 0; i < data.size(); ++i) {
-      data[i] -= o.data[i];
-    }
-    return *this;
-  }
-
-  matrix operator*(const matrix &o) const {
+  template <class U> matrix operator*(const matrix_base<U> &o) const {
     matrix res(height, o.width);
     for (long long i = 0; i < height; ++i) {
       for (long long j = 0; j < o.width; ++j) {
@@ -65,54 +173,10 @@ template <class T> struct matrix {
     }
     return res;
   }
-
-  // this = P A
-  // swaps rows
-  void apply_P_left(const std::vector<long long> &P) {
-    std::vector<bool> done(height);
-    for (long long i = 0; i < P.size(); ++i) {
-      if (done[i]) {
-        continue;
-      }
-      done[i] = true;
-      long long prev_j = i;
-      long long j = P[i];
-      while (i != j) {
-        // swap prev_j and j
-        for (size_t k = 0; k < width; ++k) {
-          std::swap(operator()(prev_j, k), operator()(j, k));
-        }
-        done[j] = true;
-        prev_j = j;
-        j = P[j];
-      }
-    }
-  }
-
-  // this = A P
-  // swaps columns
-  void apply_P_right(const std::vector<long long> &P) {
-    std::vector<bool> done(width);
-    for (long long i = 0; i < P.size(); ++i) {
-      if (done[i]) {
-        continue;
-      }
-      done[i] = true;
-      long long prev_j = i;
-      long long j = P[i];
-      while (i != j) {
-        // swap prev_j and j
-        for (size_t k = 0; k < height; ++k) {
-          std::swap(operator()(k, prev_j), operator()(k, j));
-        }
-        done[j] = true;
-        prev_j = j;
-        j = P[j];
-      }
-    }
-  }
+#if 0
 
   void PLU_decomposition(std::vector<long long> &P, matrix &LU) const;
+#endif
 };
 
 /// dense integer matrix
