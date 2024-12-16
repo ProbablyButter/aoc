@@ -46,6 +46,8 @@ template <class T> struct matrix_base {
 long long permute_parity(const std::vector<long long> &P);
 
 struct permute_matrix : public matrix_base<const long long> {
+  using matrix_base<const long long>::width;
+  using matrix_base<const long long>::height;
   std::vector<long long> data;
   long long internal[2] = {0, 1};
 
@@ -61,6 +63,17 @@ struct permute_matrix : public matrix_base<const long long> {
     for (long long i = 0; i < w; ++i) {
       data[i] = i;
     }
+  }
+
+  permute_matrix &operator=(const permute_matrix &) = default;
+
+  permute_matrix &operator=(permute_matrix &&o) {
+    if (&o != this) {
+      width = o.width;
+      height = o.height;
+      data = std::move(o.data);
+    }
+    return *this;
   }
 
   const long long &operator()(long long row, long long col) override {
@@ -118,6 +131,65 @@ struct permute_matrix : public matrix_base<const long long> {
   }
 };
 
+template <class T> struct minor_matrix : public matrix_base<T> {
+  using matrix_base<const long long>::width;
+  using matrix_base<const long long>::height;
+
+  std::vector<long long> rows;
+  std::vector<long long> cols;
+
+  matrix_base<T> *base = nullptr;
+
+  minor_matrix() : matrix_base<T>() {}
+  minor_matrix(matrix_base<T> &b_)
+      : matrix_base<T>(b_.height, b_.width), base(&b_) {
+    rows.resize(height);
+    cols.resize(width);
+    for (long long i = 0; i < height; ++i) {
+      rows[i] = i;
+    }
+
+    for (long long i = 0; i < width; ++i) {
+      cols[i] = i;
+    }
+  }
+  minor_matrix &operator=(const minor_matrix &o) = default;
+
+  minor_matrix &operator=(minor_matrix &&o) {
+    if (&o != this) {
+      width = o.width;
+      height = o.height;
+      rows = std::move(o.rows);
+      cols = std::move(o.cols);
+      base = o.base;
+    }
+    return *this;
+  }
+
+  T &operator()(long long row, long long col) override {
+    return (*base)(rows[row], cols[col]);
+  }
+
+  template <class U> minor_matrix &operator=(const matrix_base<U> &o) {
+    for (long long row = 0; row < height; ++row) {
+      for (long long col = 0; col < width; ++col) {
+        this->operator()(row, col) = o(row, col);
+      }
+    }
+    return *this;
+  }
+
+  void remove_row(long long r) {
+    rows.erase(rows.begin() + r);
+    --height;
+  }
+
+  void remove_col(long long r) {
+    cols.erase(cols.begin() + r);
+    --width;
+  }
+};
+
 // dense matrix
 template <class T> struct matrix : public matrix_base<T> {
   using matrix_base<T>::width;
@@ -162,22 +234,29 @@ template <class T> struct matrix : public matrix_base<T> {
     return data[row * width + col];
   }
 
-  template <class U> matrix operator*(const matrix_base<U> &o) const {
-    matrix res(height, o.width);
-    for (long long i = 0; i < height; ++i) {
-      for (long long j = 0; j < o.width; ++j) {
-        for (long long k = 0; k < width; ++k) {
-          res(i, j) += operator()(i, k) * o(k, j);
-        }
+  // stores L and U into LU, diagonals belong to U (diagonals of L are
+  // implicitly unity)
+  // this must be square
+  // uses partial pivoting
+  void PLU_decomposition(permute_matrix &P, matrix &LU) const {
+    P = permute_matrix(width);
+    LU = matrix(height, width);
+    // TODO: implement
+  }
+};
+
+template <class T, class U>
+matrix<T> operator*(const matrix_base<T> &a, const matrix_base<U> &o) {
+  matrix<T> res(a.height, o.width);
+  for (long long i = 0; i < a.height; ++i) {
+    for (long long j = 0; j < o.width; ++j) {
+      for (long long k = 0; k < a.width; ++k) {
+        res(i, j) += a(i, k) * o(k, j);
       }
     }
-    return res;
   }
-#if 0
-
-  void PLU_decomposition(std::vector<long long> &P, matrix &LU) const;
-#endif
-};
+  return res;
+}
 
 /// dense integer matrix
 // struct imatrix : public matrix<long long> {

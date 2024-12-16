@@ -23,7 +23,7 @@ add_library(aoc_common
   matrix.cpp
   fraction.cpp
 )
-target_compile_features(aoc_common PUBLIC cxx_std_17)
+target_compile_features(aoc_common PUBLIC cxx_std_20)
 target_include_directories(aoc_common PUBLIC common)
 target_link_libraries(aoc_common PUBLIC whereami)
 

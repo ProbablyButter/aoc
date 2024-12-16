@@ -31,6 +31,8 @@ struct fraction {
     return res;
   }
 
+  int operator<=>(const fraction& o) const; 
+
   fraction operator-(const fraction &o) const {
     fraction res(*this);
     res -= o;

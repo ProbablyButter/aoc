@@ -74,6 +74,13 @@ void fraction::reduce() {
   }
 }
 
+int fraction::operator<=>(const fraction &o) const {
+  auto lcm = std::lcm(o.den, den);
+  auto tn = num * lcm / den;
+  auto on = o.num * lcm / o.den;
+  return tn - on;
+}
+
 fraction &fraction::operator+=(const fraction &o) {
   long long lcm = std::lcm(den, o.den);
   num = num * (lcm / den) + o.num * (lcm / o.den);
