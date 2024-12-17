@@ -8,8 +8,10 @@ re2c:yyfill:check = 1;
 */
 
 #include "aoc.hpp"
+#include "fraction.hpp"
 #include "geometry_tools.hpp"
 #include "graph_tools.hpp"
+#include "matrix.hpp"
 #include "string_tools.hpp"
 
 #include <algorithm>
@@ -19,6 +21,7 @@ re2c:yyfill:check = 1;
 #include <iostream>
 #include <list>
 #include <map>
+#include <numeric>
 #include <regex>
 #include <set>
 #include <string>
@@ -27,12 +30,13 @@ re2c:yyfill:check = 1;
 #include <vector>
 
 int main(int argc, char **argv) {
-  std::filesystem::path in_path = get_resource_path("input_small.txt");
+  std::filesystem::path in_path = get_resource_path("input.txt");
   std::ifstream in(in_path);
   std::string line;
-  std::vector<std::pair<int, int>> A;
-  std::vector<std::pair<int, int>> B;
-  std::vector<std::pair<int, int>> prize;
+  std::vector<std::pair<long long, long long>> A;
+  std::vector<std::pair<long long, long long>> B;
+  std::vector<std::pair<long long, long long>> prize;
+  long long offset = 0;
   while (true) {
     std::getline(in, line);
     if (in.eof()) {
@@ -40,47 +44,56 @@ int main(int argc, char **argv) {
     }
     if (line.size() > 7 && line[7] == 'A') {
       auto tmp = aoc::split(line, "+");
-      A.emplace_back(aoc::to_int<int>(tmp[1]), aoc::to_int<int>(tmp[2]));
+      A.emplace_back(aoc::to_int<long long>(tmp[1]),
+                     aoc::to_int<long long>(tmp[2]));
     } else if (line.size() > 7 && line[7] == 'B') {
       auto tmp = aoc::split(line, "+");
-      B.emplace_back(aoc::to_int<int>(tmp[1]), aoc::to_int<int>(tmp[2]));
+      B.emplace_back(aoc::to_int<long long>(tmp[1]),
+                     aoc::to_int<long long>(tmp[2]));
     } else if (line.size() > 5) {
       auto tmp = aoc::split(line, "=");
-      prize.emplace_back(aoc::to_int<int>(tmp[1]), aoc::to_int<int>(tmp[2]));
+      prize.emplace_back(aoc::to_int<long long>(tmp[1]) + offset,
+                         aoc::to_int<long long>(tmp[2]) + offset);
     }
   }
   int A_cost = 3;
   int B_cost = 1;
-  int total = 0;
+  long long total = 0;
+  aoc::imatrix Amat(2, 2);
+  aoc::imatrix Umat(2, 2);
+  aoc::imatrix rhs(2, 1);
   for (size_t i = 0; i < prize.size(); ++i) {
-    // X == a * A.x + b * B.x
-    // Y == a * A.y + b * B.y
-    int min_A = -1;
-    int min_B = -1;
-    int num_A = 0;
-    while (true) {
-      int num_B = (prize[i].first - num_A * A[i].first) / B[i].first;
-      if (num_B < 0) {
-        break;
-      }
-      if (num_B * B[i].first + num_A * A[i].first == prize[i].first &&
-          num_B * B[i].second + num_A * A[i].second == prize[i].second) {
-        // valid
-        if (min_A < 0 ||
-            A_cost * num_A + B_cost * num_B < A_cost * min_A + B_cost * min_B) {
-          min_A = num_A;
-          min_B = num_B;
-        }
-      }
-      if (num_B <= 0) {
-        break;
-      }
-      ++num_A;
+    // Diophantine equation system:
+    // A Ax + B Bx = Px
+    // A Ay + B By = Py
+    // [Ax Bx] [A] = [Px]
+    // [Ay By] [B] = [Py]
+    Amat(0, 0) = A[i].first;
+    Amat(0, 1) = B[i].first;
+    Amat(1, 0) = A[i].second;
+    Amat(1, 1) = B[i].second;
+    aoc::hermite_normal_form(Amat, Umat);
+    rhs(0, 0) = prize[i].first;
+    rhs(1, 0) = prize[i].second;
+
+    aoc::imatrix tmp = Umat * rhs;
+
+    // hope that Amat diagonals are non-zero
+
+    if (tmp(1, 0) % Amat(1, 1)) {
+      // std::cout << i << ": impossible B" << std::endl;
+      continue;
     }
-    if (min_A >= 0) {
-      auto tmp = min_A * A_cost + min_B * B_cost;
-      total += min_A * A_cost + min_B * B_cost;
+    long long solB = tmp(1, 0) / Amat(1, 1);
+    if ((tmp(0, 0) - Amat(0, 1) * solB) % Amat(0, 0)) {
+      // std::cout << i << ": impossible A" << std::endl;
+      continue;
     }
+    long long solA = (tmp(0, 0) - Amat(0, 1) * solB) / Amat(0, 0);
+    if (solA < 0 || solB < 0) {
+      std::cout << i << ": " << solA << ", " << solB << std::endl;
+    }
+    total += solA * A_cost + solB * B_cost;
   }
   std::cout << total << std::endl;
 }
