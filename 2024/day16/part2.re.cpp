@@ -93,24 +93,32 @@ int main(int argc, char **argv) {
                    std::istreambuf_iterator<char>{});
   auto grid = aoc::split(data);
   // find the start
-  int srow, scol;
-  for (srow = 0; srow < grid.size(); ++srow) {
-    for (scol = 0; scol < grid[srow].size(); ++scol) {
-      if (grid[srow][scol] == 'S') {
+  node_type start, end_node;
+  for (start[0] = 0; start[0] < grid.size(); ++start[0]) {
+    for (start[1] = 0; start[1] < grid[start[0]].size(); ++start[1]) {
+      if (grid[start[0]][start[1]] == 'S') {
         goto found_start;
       }
     }
   }
 found_start:
+  for (end_node[0] = 0; end_node[0] < grid.size(); ++end_node[0]) {
+    for (end_node[1] = 0; end_node[1] < grid[end_node[0]].size();
+         ++end_node[1]) {
+      if (grid[end_node[0]][end_node[1]] == 'E') {
+        goto found_end_node;
+      }
+    }
+  }
+found_end_node:
   // gen djikstra, but node ID is position and facing direction
   // 0: north
   // 1: east
   // 2: south
   // 3: west
-  node_type start = {srow, scol, 1};
+  start[2] = 1;
   std::unordered_map<node_type, int64_t, aoc::array_hasher> dist;
   std::unordered_map<node_type, node_type, aoc::array_hasher> prev;
-  node_type end_node;
   auto gen_neighbors = [&](const node_type &node) {
     std::vector<std::pair<node_type, int64_t>> res;
     // left turn
@@ -135,23 +143,18 @@ found_start:
     }
     return res;
   };
-  {
-    auto term_func = [&](const node_type &node) {
-      if (grid[node[0]][node[1]] == 'E') {
-        end_node = node;
-        return true;
-      }
-      return false;
-    };
-    aoc::gen_dijkstra(start, term_func, gen_neighbors, dist, prev);
-  }
-  auto min_cost = dist[end_node];
 
-  // found one best path, now search for all best paths
   // first find the lowest cost to get to any position/direction
   {
     auto term_func = [&](const node_type &node) { return false; };
     aoc::gen_dijkstra(start, term_func, gen_neighbors, dist, prev);
+  }
+  int64_t min_cost = -1;
+  for (int dir = 0; dir < 4; ++dir) {
+    end_node[2] = dir;
+    if (min_cost < 0 || dist[end_node] < min_cost) {
+      min_cost = dist[end_node];
+    }
   }
   // now do a reverse DFS of all paths which could lead to an end node and has
   // the same cost
