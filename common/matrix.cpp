@@ -67,7 +67,7 @@ void hermite_normal_form(imatrix &H, imatrix &U) {
   for (long long row = 0; row < U.height; ++row) {
     // do we need to pivot?
     if (!H(row, row)) {
-      // TODO: find pivot
+      // find pivot
       long long prow;
       for (prow = row + 1; prow < U.height; ++prow) {
         if (H(prow, row)) {
@@ -128,8 +128,31 @@ void hermite_normal_form(imatrix &H, imatrix &U) {
         }
       }
     }
-    // TODO: now ensure entries above pivot are non-negative, and smaller than
-    // pivot
+    // now ensure entries above pivot are non-negative, and smaller than
+    for (long long prow = 0; prow < row; ++prow) {
+      if (H(row, row) == 0) {
+        // impossible to adjust
+        continue;
+      }
+
+      long long mult;
+      if(H(prow,row) < 0){
+        mult = (H(row, row) - 1 - H(prow, row)) / H(row, row);
+      }
+      else{
+        mult = -(H(prow, row)) / H(row, row);
+      }
+      if (mult) {
+        // apply to U
+        for (long long col = 0; col < U.width; ++col) {
+          U(prow, col) += mult * U(row, col);
+        }
+        // apply to H
+        for (long long col = row; col < U.width; ++col) {
+          H(prow, col) += mult * H(row, col);
+        }
+      }
+    }
   }
 }
 } // namespace aoc

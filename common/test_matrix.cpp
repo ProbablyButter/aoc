@@ -77,8 +77,8 @@ int main() {
     std::cout << std::endl;
   }
 #endif
-#if 0
   {
+    // wikipedia 4x4 test case
     aoc::imatrix A(4, 4);
     A(0, 0) = 3;
     A(0, 1) = 3;
@@ -115,10 +115,20 @@ int main() {
       }
       std::cout << std::endl;
     }
+
+    aoc::matrix<aoc::fraction> Utest(U.height, U.width);
+    for (int row = 0; row < U.height; ++row) {
+      for (int col = 0; col < U.width; ++col) {
+        Utest(row, col) = U(row, col);
+      }
+    }
     std::cout << std::endl;
+    aoc::permute_matrix P;
+    LUP_decomposition(Utest, P);
+    std::cout << LUP_determinant(Utest, P) << std::endl;
   }
-#endif
   {
+    // wikipedia 3x4 test case
     aoc::imatrix A(3, 4);
     A(0, 0) = 2;
     A(0, 1) = 3;
@@ -152,6 +162,7 @@ int main() {
       std::cout << std::endl;
     }
     std::cout << std::endl;
+
     aoc::matrix<aoc::fraction> Utest(U.height, U.width);
     for (int row = 0; row < U.height; ++row) {
       for (int col = 0; col < U.width; ++col) {
