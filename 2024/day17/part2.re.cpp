@@ -34,6 +34,14 @@ struct machine {
   std::vector<int> instrs;
   std::vector<int> output;
 
+  void reset(long long iA, long long iB, long long iC) {
+    A = iA;
+    B = iB;
+    C = iC;
+    ip = 0;
+    output.clear();
+  }
+
   int64_t get_combo() const {
     switch (instrs[ip + 1]) {
     case 0:
@@ -52,8 +60,8 @@ struct machine {
     }
   }
 
-  void print_combo(int i){
-    switch(i){
+  void print_combo(int i) {
+    switch (i) {
     case 0:
     case 1:
     case 2:
@@ -72,11 +80,12 @@ struct machine {
     }
   }
 
-  void dump_prog(){
-    for(size_t i = 0; i < instrs.size(); i += 2){
-      switch(instrs[i]){
+  void dump_prog() {
+    for (size_t i = 0; i < instrs.size(); i += 2) {
+      switch (instrs[i]) {
       case 0:
-        std::cout << "A /= 2**"; print_combo(instrs[i+1]);
+        std::cout << "A /= 2**";
+        print_combo(instrs[i + 1]);
         std::cout << std::endl;
         break;
       case 1:
@@ -106,7 +115,7 @@ struct machine {
       case 7:
         std::cout << "C = A / 2**";
         print_combo(instrs[i + 1]);
-        std::cout<< std::endl;
+        std::cout << std::endl;
         break;
       }
     }
@@ -181,6 +190,16 @@ struct machine {
 };
 
 int main(int argc, char **argv) {
+  // my program:
+  // B = (A & 7) ^ 3
+  // C = A >> B
+  // B ^= C
+  // A >>= 3
+  // B ^= 5
+  // out B % 8
+  // jnz 0
+  // this solution only works for this program!
+
   std::filesystem::path in_path = get_resource_path("input.txt");
   std::ifstream in(in_path);
 
@@ -214,62 +233,40 @@ int main(int argc, char **argv) {
     }
   }
 
-  {
-    long long init_B = state.B, init_C = state.C;
-    long long i = 1ll << (48 - 3);
+  long long init_B = state.B, init_C = state.C;
+
+  // figure out what the MSB must be to get the last output
+  auto msb_min = 1ll << (3 * state.instrs.size() - 3);
+  auto msb_max = 1ll << (3 * state.instrs.size());
+  auto incr = msb_min;
+
+  long long i = msb_min;
+  int pos = state.instrs.size() - 1;
+  while (pos >= 0) {
     while (true) {
-      state.A = i;
-      state.B = init_B;
-      state.C = init_C;
-      state.ip = 0;
-      state.output.clear();
-      size_t last_output = 0;
-      bool valid = true;
+      state.reset(i, init_B, init_C);
       while (!state.step()) {
-#if 0
-        if (last_output != state.output.size()) {
-          // is it even possible to be equal?
-          if (state.output.size() > state.instrs.size()) {
-            valid = false;
-            goto prog_term;
-          }
-          for (long long j = last_output;
-               j < state.output.size() && j < state.instrs.size(); ++j) {
-            if (state.output[j] != state.instrs[j]) {
-              valid = false;
-              goto prog_term;
-            }
-          }
-          last_output = state.output.size();
-        }
-#endif
       }
-    prog_term:
+      bool valid = true;
+      for (int j = pos; j < state.instrs.size(); ++j) {
+        if (state.output.at(j) != state.instrs.at(j)) {
+          valid = false;
+        }
+      }
       if (valid) {
-        if (state.output.size() >= state.instrs.size()) {
-          valid = true;
-          for (size_t j = 0; j < state.instrs.size(); ++j) {
-            if (state.output[j] != state.instrs[j]) {
-              valid = false;
-              break;
-            }
-          }
-          if (valid) {
-            std::cout << i << std::endl;
-            return 0;
-          }
-        }
-#if 0
-        if (state.output == state.instrs) {
-          std::cout << i << std::endl;
-          return 0;
-        }
-#endif
+        break;
       }
-      ++i;
-      if (i % 10000000ll == 0) {
-        std::cout << i << std::endl;
-      }
+      i += incr;
     }
+    std::cout << pos << std::endl;
+    --pos;
+    incr >>= 3;
+  }
+  // verify our solution
+  state.reset(i, init_B, init_C);
+  while (!state.step()) {
+  }
+  if (state.output == state.instrs) {
+    std::cout << i << std::endl;
   }
 }
