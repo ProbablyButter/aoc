@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
     }
   }
 found_start:
-  // gen djikstra, but node ID is position and facing direction
+  // gen dijkstra, but node ID is position and facing direction
   // 0: north
   // 1: east
   // 2: south
